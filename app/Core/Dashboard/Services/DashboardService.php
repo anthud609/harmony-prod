@@ -1,65 +1,86 @@
 <?php
-// File: app/Core/Dashboard/Services/DashboardService.php
+// File: app/Core/Dashboard/Services/DashboardService.php (Enhanced)
 namespace App\Core\Dashboard\Services;
 
+use App\Core\Dashboard\Repositories\DashboardRepository;
+use App\Core\Dashboard\Repositories\ActivityRepository;
+use App\Core\Dashboard\Repositories\WidgetRepository;
+
+/**
+ * Business logic layer - handles complex operations
+ */
 class DashboardService
 {
+    private DashboardRepository $dashboardRepo;
+    private ActivityRepository $activityRepo;
+    private WidgetRepository $widgetRepo;
+    
+    public function __construct(
+        DashboardRepository $dashboardRepo,
+        ActivityRepository $activityRepo,
+        WidgetRepository $widgetRepo
+    ) {
+        $this->dashboardRepo = $dashboardRepo;
+        $this->activityRepo = $activityRepo;
+        $this->widgetRepo = $widgetRepo;
+    }
+    
     /**
-     * Get dashboard statistics
+     * Get complete dashboard data for a user
      */
-    public function getDashboardStats(): array
+    public function getDashboardData(int $userId): array
     {
-        // In a real application, this would fetch from database
         return [
-            'totalEmployees' => 284,
-            'presentToday' => 270,
-            'onLeave' => 14,
-            'newApplications' => 8
+            'stats' => $this->dashboardRepo->getStats($userId),
+            'activities' => $this->activityRepo->getRecentActivities($userId, 10),
+            'widgets' => $this->widgetRepo->getUserWidgets($userId),
+            'favorites' => $this->dashboardRepo->getUserFavorites($userId)
         ];
     }
     
     /**
-     * Get recent activities
+     * Update widget configuration with validation
      */
-    public function getRecentActivities(): array
-    {
-        // In a real application, this would fetch from database
-        return [
-            [
-                'type' => 'new_employee',
-                'icon' => 'fas fa-user-plus',
-                'color' => 'blue',
-                'message' => '<span class="font-medium">Sarah Johnson</span> joined as Senior Developer',
-                'time' => '2 hours ago'
-            ],
-            [
-                'type' => 'leave_approved',
-                'icon' => 'fas fa-check',
-                'color' => 'green',
-                'message' => 'Leave request approved for <span class="font-medium">Michael Chen</span>',
-                'time' => '5 hours ago'
-            ],
-            [
-                'type' => 'leave_request',
-                'icon' => 'fas fa-calendar',
-                'color' => 'orange',
-                'message' => '<span class="font-medium">Emma Davis</span> requested leave for Dec 25-27',
-                'time' => 'Yesterday'
-            ]
-        ];
-    }
-    
-    /**
-     * Update widget configuration
-     */
-    public function updateWidget(?string $widgetId, array $configuration): array
+    public function updateWidget(int $userId, ?string $widgetId, array $configuration): array
     {
         if (!$widgetId) {
-            return ['success' => false, 'error' => 'Widget ID required'];
+            throw new \InvalidArgumentException('Widget ID is required');
         }
         
-        // In a real application, this would update the database
-        // For now, just return success
-        return ['success' => true, 'widgetId' => $widgetId];
+        // Validate user owns the widget
+        if (!$this->widgetRepo->userOwnsWidget($userId, $widgetId)) {
+            throw new \InvalidArgumentException('Widget not found');
+        }
+        
+        // Validate configuration
+        $this->validateWidgetConfiguration($widgetId, $configuration);
+        
+        // Update widget
+        $success = $this->widgetRepo->updateConfiguration($widgetId, $configuration);
+        
+        return [
+            'success' => $success,
+            'widgetId' => $widgetId,
+            'configuration' => $configuration
+        ];
+    }
+    
+    private function validateWidgetConfiguration(string $widgetId, array $configuration): void
+    {
+        // Business rules for widget configuration
+        $widgetType = $this->widgetRepo->getWidgetType($widgetId);
+        
+        switch ($widgetType) {
+            case 'chart':
+                if (!isset($configuration['chartType'])) {
+                    throw new \InvalidArgumentException('Chart type is required');
+                }
+                break;
+            case 'stat':
+                if (!isset($configuration['metric'])) {
+                    throw new \InvalidArgumentException('Metric is required');
+                }
+                break;
+        }
     }
 }
