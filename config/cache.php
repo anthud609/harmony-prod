@@ -1,4 +1,5 @@
 <?php
+
 // File: config/cache.php
 
 return [

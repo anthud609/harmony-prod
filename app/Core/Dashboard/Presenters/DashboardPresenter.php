@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Core/Dashboard/Presenters/DashboardPresenter.php
+
 namespace App\Core\Dashboard\Presenters;
 
 use App\Core\Layout\LayoutManager;
@@ -11,12 +12,12 @@ use App\Core\Layout\LayoutManager;
 class DashboardPresenter
 {
     private LayoutManager $layoutManager;
-    
+
     public function __construct(LayoutManager $layoutManager)
     {
         $this->layoutManager = $layoutManager;
     }
-    
+
     public function renderDashboard(array $data, array $user): string
     {
         // Prepare view data
@@ -28,31 +29,31 @@ class DashboardPresenter
             'recentActivities' => $data['activities'],
             'helpLink' => 'https://docs.harmonyhrms.com/dashboard',
             'pageId' => 'dashboard-home',
-            'isFavorite' => in_array('dashboard-home', $data['favorites'])
+            'isFavorite' => in_array('dashboard-home', $data['favorites']),
         ];
-        
+
         // Set breadcrumbs
         $breadcrumbs = [
             ['label' => 'Home', 'url' => '/'],
-            ['label' => 'Dashboard']
+            ['label' => 'Dashboard'],
         ];
-        
+
         // Set page actions
         $pageActions = $this->getPageActions();
-        
+
         // Use output buffering to capture rendered content
         ob_start();
-        
+
         $this->layoutManager
             ->setLayout('main')
             ->with($viewData)
             ->setBreadcrumbs($breadcrumbs)
             ->setPageActions($pageActions)
             ->render(__DIR__ . '/../Views/dashboard.php');
-            
+
         return ob_get_clean();
     }
-    
+
     private function getPageActions(): array
     {
         return [
@@ -60,7 +61,7 @@ class DashboardPresenter
                 'label' => 'Export Report',
                 'icon' => 'fas fa-download',
                 'variant' => 'secondary',
-                'data-action' => 'export-dashboard'
+                'data-action' => 'export-dashboard',
             ],
             [
                 'type' => 'dropdown',
@@ -72,28 +73,28 @@ class DashboardPresenter
                     [
                         'label' => 'Refresh Data',
                         'icon' => 'fas fa-sync-alt',
-                        'data-action' => 'refresh-dashboard'
+                        'data-action' => 'refresh-dashboard',
                     ],
                     [
                         'label' => 'Configure Widgets',
                         'icon' => 'fas fa-cog',
-                        'url' => '/dashboard/configure'
+                        'url' => '/dashboard/configure',
                     ],
                     'divider',
                     [
                         'label' => 'Reset to Default',
                         'icon' => 'fas fa-undo',
                         'data-action' => 'reset-dashboard',
-                        'danger' => true
-                    ]
-                ]
+                        'danger' => true,
+                    ],
+                ],
             ],
             [
                 'label' => 'Add Widget',
                 'icon' => 'fas fa-plus',
                 'variant' => 'primary',
-                'data-action' => 'add-widget'
-            ]
+                'data-action' => 'add-widget',
+            ],
         ];
     }
 }

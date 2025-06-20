@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Dashboard/Repositories/ActivityRepository.php
+
 namespace App\Core\Dashboard\Repositories;
 
 /**
@@ -17,7 +19,7 @@ class ActivityRepository
                 'time' => '2 hours ago',
                 'icon' => 'fas fa-user-plus',
                 'color' => 'green',
-                'timestamp' => time() - 7200
+                'timestamp' => time() - 7200,
             ],
             [
                 'id' => 2,
@@ -25,7 +27,7 @@ class ActivityRepository
                 'time' => '4 hours ago',
                 'icon' => 'fas fa-check-circle',
                 'color' => 'blue',
-                'timestamp' => time() - 14400
+                'timestamp' => time() - 14400,
             ],
             [
                 'id' => 3,
@@ -33,8 +35,8 @@ class ActivityRepository
                 'time' => '6 hours ago',
                 'icon' => 'fas fa-money-check-alt',
                 'color' => 'purple',
-                'timestamp' => time() - 21600
-            ]
+                'timestamp' => time() - 21600,
+            ],
         ];
     }
 }

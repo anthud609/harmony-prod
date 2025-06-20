@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login – Harmony HRMS</title>
+    <title>Login â€“ Harmony HRMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -177,7 +177,7 @@
             <!-- Security info -->
             <div class="mt-4 sm:mt-6 text-center">
                 <p class="text-white/60 text-xs">
-                    🔒 Your connection is secure and encrypted
+                    ðŸ”’ Your connection is secure and encrypted
                 </p>
             </div>
         </div>

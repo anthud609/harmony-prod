@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Security/XssProtection.php
+
 namespace App\Core\Security;
 
 class XssProtection
@@ -12,14 +14,14 @@ class XssProtection
         if (is_null($value)) {
             return '';
         }
-        
+
         if (is_array($value) || is_object($value)) {
             return '';
         }
-        
+
         return htmlspecialchars((string)$value, $flags, $encoding);
     }
-    
+
     /**
      * Escape HTML attributes
      */
@@ -27,16 +29,17 @@ class XssProtection
     {
         return self::escape($value, ENT_QUOTES | ENT_HTML5);
     }
-    
+
     /**
      * Escape JavaScript/JSON content
      */
     public static function js($value): string
     {
         $escaped = json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
         return $escaped !== false ? $escaped : '""';
     }
-    
+
     /**
      * Escape URL parameters
      */
@@ -44,7 +47,7 @@ class XssProtection
     {
         return rawurlencode((string)$value);
     }
-    
+
     /**
      * Escape CSS values
      */
@@ -53,7 +56,7 @@ class XssProtection
         // Remove any potentially dangerous characters
         return preg_replace('/[^a-zA-Z0-9\-_]/', '', (string)$value);
     }
-    
+
     /**
      * Allow specific HTML tags (for rich content)
      */
@@ -63,8 +66,9 @@ class XssProtection
             // Default safe tags
             $allowedTags = ['b', 'i', 'em', 'strong', 'span', 'p', 'br'];
         }
-        
+
         $allowedTagsString = '<' . implode('><', $allowedTags) . '>';
+
         return strip_tags((string)$html, $allowedTagsString);
     }
 }

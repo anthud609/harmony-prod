@@ -1,0 +1,40 @@
+#!/bin/bash
+
+echo "Running pre-commit checks..."
+
+# Stash unstaged changes
+git stash -q --keep-index
+
+# Run PHP-CS-Fixer on staged files
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$' | tr '\n' ' ')
+
+if [ -n "$CHANGED_FILES" ]; then
+    echo "Checking PHP code style..."
+    
+    # Check with PHP-CS-Fixer
+    vendor/bin/php-cs-fixer fix --dry-run --diff --using-cache=no --path-mode=intersection -- $CHANGED_FILES
+    CS_FIXER_STATUS=$?
+    
+    # Check with PHPCS
+    vendor/bin/phpcs $CHANGED_FILES
+    PHPCS_STATUS=$?
+    
+    # Run PHPStan on changed files
+    echo "Running static analysis..."
+    vendor/bin/phpstan analyse $CHANGED_FILES
+    PHPSTAN_STATUS=$?
+    
+    # Restore stash
+    git stash pop -q
+    
+    if [ $CS_FIXER_STATUS -ne 0 ] || [ $PHPCS_STATUS -ne 0 ] || [ $PHPSTAN_STATUS -ne 0 ]; then
+        echo "❌ Pre-commit checks failed!"
+        echo "Run 'composer fix-style' to fix style issues"
+        exit 1
+    fi
+else
+    # Restore stash
+    git stash pop -q
+fi
+
+echo "✅ Pre-commit checks passed!"

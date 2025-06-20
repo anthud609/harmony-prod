@@ -66,24 +66,24 @@ echo "<h2>Common Issues Check</h2>";
 if (function_exists('apache_get_modules')) {
     $modules = apache_get_modules();
     if (in_array('mod_rewrite', $modules)) {
-        echo "<p style='color: green;'>✓ mod_rewrite is enabled</p>";
+        echo "<p style='color: green;'>âœ“ mod_rewrite is enabled</p>";
     } else {
-        echo "<p style='color: red;'>✗ mod_rewrite is NOT enabled</p>";
+        echo "<p style='color: red;'>âœ— mod_rewrite is NOT enabled</p>";
     }
 } else {
-    echo "<p style='color: orange;'>⚠ Cannot check Apache modules (apache_get_modules not available)</p>";
+    echo "<p style='color: orange;'>âš  Cannot check Apache modules (apache_get_modules not available)</p>";
 }
 
 // Check .htaccess
 $htaccess = __DIR__ . '/.htaccess';
 if (file_exists($htaccess)) {
-    echo "<p style='color: green;'>✓ .htaccess exists</p>";
+    echo "<p style='color: green;'>âœ“ .htaccess exists</p>";
     echo "<h3>.htaccess content:</h3>";
     echo "<pre style='background: #f0f0f0; padding: 10px;'>";
     echo htmlspecialchars(file_get_contents($htaccess));
     echo "</pre>";
 } else {
-    echo "<p style='color: red;'>✗ .htaccess NOT found</p>";
+    echo "<p style='color: red;'>âœ— .htaccess NOT found</p>";
 }
 
 // Check for infinite redirects

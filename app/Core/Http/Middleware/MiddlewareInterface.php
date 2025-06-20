@@ -1,7 +1,7 @@
 <?php
 
-
 // File: app/Core/Http/Middleware/MiddlewareInterface.php
+
 namespace App\Core\Http\Middleware;
 
 use App\Core\Http\Request;

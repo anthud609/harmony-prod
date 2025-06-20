@@ -1,11 +1,13 @@
 <?php
- // File: app/Core/Security/ContentSecurityPolicy.php
+
+// File: app/Core/Security/ContentSecurityPolicy.php
+
 namespace App\Core\Security;
 
 class ContentSecurityPolicy
 {
     private array $directives = [];
-        private ?string $nonce = null;   // ← declare it here
+    private ?string $nonce = null;   // ← declare it here
 
     public function __construct()
     {
@@ -20,36 +22,39 @@ class ContentSecurityPolicy
             'frame-ancestors' => ["'none'"],
             'base-uri' => ["'self'"],
             'form-action' => ["'self'"],
-            'object-src' => ["'none'"]
+            'object-src' => ["'none'"],
         ];
     }
-    
+
     public function addDirective(string $directive, array $sources): self
     {
         $this->directives[$directive] = array_merge(
             $this->directives[$directive] ?? [],
             $sources
         );
+
         return $this;
     }
-    
+
     public function getNonce(): string
     {
-        if (!isset($this->nonce)) {
+        if (! isset($this->nonce)) {
             $this->nonce = base64_encode(random_bytes(16));
         }
+
         return $this->nonce;
     }
-    
+
     public function getHeader(): string
     {
         $policies = [];
         foreach ($this->directives as $directive => $sources) {
             $policies[] = $directive . ' ' . implode(' ', $sources);
         }
+
         return implode('; ', $policies);
     }
-    
+
     public function send(): void
     {
         header('Content-Security-Policy: ' . $this->getHeader());

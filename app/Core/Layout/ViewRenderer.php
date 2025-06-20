@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Layout/ViewRenderer.php
+
 namespace App\Core\Layout;
 
 /**
@@ -12,19 +14,20 @@ class ViewRenderer
      */
     public function render(string $viewPath, array $data = []): string
     {
-        if (!file_exists($viewPath)) {
+        if (! file_exists($viewPath)) {
             throw new \RuntimeException("View file not found: {$viewPath}");
         }
-        
+
         // Extract data to make available in view
         extract($data);
-        
+
         // Capture output
         ob_start();
         require $viewPath;
+
         return ob_get_clean();
     }
-    
+
     /**
      * Render and output a view directly
      */
@@ -33,11 +36,3 @@ class ViewRenderer
         echo $this->render($viewPath, $data);
     }
 }
-
-
-
-
-
-
-
-

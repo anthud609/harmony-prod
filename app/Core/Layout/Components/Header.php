@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/Header.php
+
 namespace App\Core\Layout\Components;
 
 class Header
@@ -8,7 +9,7 @@ class Header
     private Notifications $notifications;
     private CommandPalette $commandPalette;
     private UserMenu $userMenu;
-    
+
     public function __construct(
         Messages $messages,
         Notifications $notifications,
@@ -20,7 +21,7 @@ class Header
         $this->commandPalette = $commandPalette;
         $this->userMenu = $userMenu;
     }
-    
+
     public function render(array $data = []): void
     {
         ?>
@@ -51,7 +52,7 @@ class Header
                         <i class="fas fa-search text-gray-400 dark:text-gray-500 mr-3"></i>
                         <span class="text-gray-500 dark:text-gray-400 flex-1">Search anything...</span>
                         <kbd class="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 rounded">
-                            <span class="text-xs">⌘</span>K
+                            <span class="text-xs">âŒ˜</span>K
                         </kbd>
                     </button>
                 </div>

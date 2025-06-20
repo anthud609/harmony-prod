@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/Messages.php
+
 namespace App\Core\Layout\Components;
 
 class Messages
@@ -8,11 +9,11 @@ class Messages
     {
         $this->renderDropdown($data);
     }
-    
+
     public function renderDropdown(array $data = []): void
     {
         $messages = $this->getMessages($data);
-        $unreadCount = $data['user']['messageCount'] ?? count(array_filter($messages, fn($m) => !$m['read']));
+        $unreadCount = $data['user']['messageCount'] ?? count(array_filter($messages, fn ($m) => ! $m['read']));
         ?>
         <!-- Messages -->
         <div class="relative">
@@ -74,8 +75,8 @@ class Messages
                 'read' => false,
                 'avatar' => [
                     'initials' => 'JD',
-                    'gradient' => 'from-green-400 to-blue-500'
-                ]
+                    'gradient' => 'from-green-400 to-blue-500',
+                ],
             ],
             [
                 'id' => 2,
@@ -85,8 +86,8 @@ class Messages
                 'read' => false,
                 'avatar' => [
                     'initials' => 'MR',
-                    'gradient' => 'from-purple-400 to-pink-500'
-                ]
+                    'gradient' => 'from-purple-400 to-pink-500',
+                ],
             ],
             [
                 'id' => 3,
@@ -96,9 +97,9 @@ class Messages
                 'read' => true,
                 'avatar' => [
                     'initials' => 'ST',
-                    'gradient' => 'from-orange-400 to-red-500'
-                ]
-            ]
+                    'gradient' => 'from-orange-400 to-red-500',
+                ],
+            ],
         ];
     }
 }

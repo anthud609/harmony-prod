@@ -1,10 +1,11 @@
 <?php
+
 // File: routes/api.php
-use App\Core\Api\Controllers\SessionController;
-use App\Core\Api\Controllers\SearchController;
+use App\Core\Api\Controllers\HealthCheckController;
 use App\Core\Api\Controllers\MessagesController;
 use App\Core\Api\Controllers\NotificationsController;
-use App\Core\Api\Controllers\HealthCheckController;
+use App\Core\Api\Controllers\SearchController;
+use App\Core\Api\Controllers\SessionController;
 
 // The $router variable is available from index.php
 

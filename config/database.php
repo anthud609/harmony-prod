@@ -1,4 +1,5 @@
 <?php
+
 // File: config/database.php
 
 use App\Core\Config\ConfigManager;
@@ -6,7 +7,6 @@ use App\Core\Config\ConfigManager;
 $config = ConfigManager::getInstance();
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name
@@ -32,11 +32,10 @@ return [
     */
 
     'connections' => [
-
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => $config->env('DATABASE_URL'),
-            'database' => $config->env('DB_DATABASE', dirname(__DIR__).'/database/database.sqlite'),
+'database' => $config->env('DB_DATABASE', dirname(__DIR__) . '/database/database.sqlite'),
             'prefix' => '',
             'foreign_key_constraints' => $config->env('DB_FOREIGN_KEYS', true),
         ],
@@ -75,7 +74,6 @@ return [
             'schema' => 'public',
             'sslmode' => 'prefer',
         ],
-
     ],
 
     /*
@@ -90,5 +88,4 @@ return [
     */
 
     'migrations' => 'migrations',
-
 ];

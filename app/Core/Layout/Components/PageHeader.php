@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/PageHeader.php
+
 namespace App\Core\Layout\Components;
 
 class PageHeader
@@ -19,7 +20,7 @@ class PageHeader
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                 <!-- Breadcrumbs -->
-                <?php if (!empty($breadcrumbs)): ?>
+                <?php if (! empty($breadcrumbs)): ?>
                 <nav class="mb-3" aria-label="Breadcrumb">
                     <ol class="flex items-center space-x-2 text-sm">
                         <?php foreach ($breadcrumbs as $index => $crumb): ?>
@@ -103,7 +104,7 @@ class PageHeader
                     </div>
                     
                     <!-- Action Buttons -->
-                    <?php if (!empty($actions)): ?>
+                    <?php if (! empty($actions)): ?>
                     <div class="mt-4 sm:mt-0 sm:ml-6 flex flex-wrap gap-2">
                         <?php foreach ($actions as $action): ?>
                             <?php if (isset($action['type']) && $action['type'] === 'dropdown'): ?>

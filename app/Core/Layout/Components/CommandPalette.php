@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/CommandPalette.php
+
 namespace App\Core\Layout\Components;
 
 class CommandPalette
@@ -37,8 +38,8 @@ class CommandPalette
                     <div class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                         <div class="flex items-center gap-4">
                             <span class="flex items-center gap-1">
-                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↑</kbd>
-                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↓</kbd>
+                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">â†‘</kbd>
+                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">â†“</kbd>
                                 Navigate
                             </span>
                             <span class="flex items-center gap-1">
@@ -120,7 +121,7 @@ class CommandPalette
                 'color' => 'indigo',
                 'title' => 'Add New Employee',
                 'description' => 'Create a new employee profile',
-                'shortcut' => '⌘N'
+                'shortcut' => 'âŒ˜N',
             ],
             [
                 'action' => 'request-leave',
@@ -128,8 +129,8 @@ class CommandPalette
                 'color' => 'green',
                 'title' => 'Request Leave',
                 'description' => 'Submit a new leave request',
-                'shortcut' => '⌘L'
-            ]
+                'shortcut' => 'âŒ˜L',
+            ],
         ];
     }
 
@@ -138,7 +139,7 @@ class CommandPalette
         // In a real app, this would come from user session or database
         return [
             ['query' => 'Employee attendance report'],
-            ['query' => 'Sarah Johnson profile']
+            ['query' => 'Sarah Johnson profile'],
         ];
     }
 }

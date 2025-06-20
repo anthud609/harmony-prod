@@ -1,16 +1,18 @@
 <?php
+
 // File: app/Core/Security/CsrfMiddleware.php
+
 namespace App\Core\Security;
 
 class CsrfMiddleware
 {
     private CsrfProtection $csrfProtection;
-    
+
     public function __construct(CsrfProtection $csrfProtection)
     {
         $this->csrfProtection = $csrfProtection;
     }
-    
+
     /**
      * Handle CSRF verification for the request
      */
@@ -22,7 +24,7 @@ class CsrfMiddleware
             $this->handleCsrfFailure($e);
         }
     }
-    
+
     /**
      * Handle CSRF verification failure
      */
@@ -35,30 +37,30 @@ class CsrfMiddleware
             $_SERVER['REMOTE_ADDR'] ?? 'unknown',
             $_SERVER['REQUEST_URI'] ?? 'unknown'
         ));
-        
+
         // Return appropriate response
         if ($this->isAjaxRequest()) {
             header('Content-Type: application/json');
             http_response_code(403);
             echo json_encode([
                 'error' => 'CSRF token validation failed',
-                'message' => 'Your session has expired. Please refresh the page and try again.'
+                'message' => 'Your session has expired. Please refresh the page and try again.',
             ]);
         } else {
             http_response_code(403);
             $_SESSION['csrf_error'] = 'Your session has expired. Please refresh the page and try again.';
             header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
         }
-        
+
         exit;
     }
-    
+
     /**
      * Check if request is AJAX
      */
     private function isAjaxRequest(): bool
     {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+        return ! empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 }

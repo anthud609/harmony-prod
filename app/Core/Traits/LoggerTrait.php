@@ -1,14 +1,16 @@
 <?php
+
 // File: app/Core/Traits/LoggerTrait.php
+
 namespace App\Core\Traits;
 
-use Psr\Log\LoggerInterface;
 use App\Core\Container\ContainerFactory;
+use Psr\Log\LoggerInterface;
 
 trait LoggerTrait
 {
     private ?LoggerInterface $logger = null;
-    
+
     /**
      * Get the logger instance
      */
@@ -18,10 +20,10 @@ trait LoggerTrait
             $container = ContainerFactory::getInstance();
             $this->logger = $container->get(LoggerInterface::class);
         }
-        
+
         return $this->logger;
     }
-    
+
     /**
      * Log debug message
      */
@@ -29,7 +31,7 @@ trait LoggerTrait
     {
         $this->logger()->debug($message, $context);
     }
-    
+
     /**
      * Log info message
      */
@@ -37,7 +39,7 @@ trait LoggerTrait
     {
         $this->logger()->info($message, $context);
     }
-    
+
     /**
      * Log notice message
      */
@@ -45,7 +47,7 @@ trait LoggerTrait
     {
         $this->logger()->notice($message, $context);
     }
-    
+
     /**
      * Log warning message
      */
@@ -53,7 +55,7 @@ trait LoggerTrait
     {
         $this->logger()->warning($message, $context);
     }
-    
+
     /**
      * Log error message
      */
@@ -61,7 +63,7 @@ trait LoggerTrait
     {
         $this->logger()->error($message, $context);
     }
-    
+
     /**
      * Log critical message
      */
@@ -69,7 +71,7 @@ trait LoggerTrait
     {
         $this->logger()->critical($message, $context);
     }
-    
+
     /**
      * Log alert message
      */
@@ -77,7 +79,7 @@ trait LoggerTrait
     {
         $this->logger()->alert($message, $context);
     }
-    
+
     /**
      * Log emergency message
      */

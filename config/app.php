@@ -1,4 +1,5 @@
 <?php
+
 // File: config/app.php
 // Simple configuration without using the config() helper to avoid circular dependency
 

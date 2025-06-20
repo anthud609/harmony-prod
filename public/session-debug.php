@@ -40,12 +40,12 @@ $remaining = $lastActivity ? max(0, 360 - $elapsed) : 0;
     
     <?php if ($remaining <= 0 && $lastActivity): ?>
     <div class="error">
-        <strong>⚠️ SESSION EXPIRED!</strong><br>
+        <strong>âš ï¸ SESSION EXPIRED!</strong><br>
         Session should have been destroyed.
     </div>
     <?php elseif ($remaining <= 60 && $remaining > 0): ?>
     <div class="warning">
-        <strong>⚠️ SESSION EXPIRING SOON!</strong><br>
+        <strong>âš ï¸ SESSION EXPIRING SOON!</strong><br>
         Warning should be displayed. <?= $remaining ?> seconds remaining.
     </div>
     <?php endif; ?>

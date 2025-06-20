@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/Notifications.php
+
 namespace App\Core\Layout\Components;
 
 class Notifications
@@ -8,11 +9,11 @@ class Notifications
     {
         $this->renderDropdown($data);
     }
-    
+
     public function renderDropdown(array $data = []): void
     {
         $notifications = $this->getNotifications($data);
-        $unreadCount = $data['user']['notificationCount'] ?? count(array_filter($notifications, fn($n) => !$n['read']));
+        $unreadCount = $data['user']['notificationCount'] ?? count(array_filter($notifications, fn ($n) => ! $n['read']));
         ?>
         <!-- Notifications -->
         <div class="relative">
@@ -46,7 +47,7 @@ class Notifications
     private function renderNotificationItem(array $notification): void
     {
         ?>
-        <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 <?= !$notification['read'] ? 'bg-blue-50 dark:bg-blue-900/20' : '' ?>">
+        <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 <?= ! $notification['read'] ? 'bg-blue-50 dark:bg-blue-900/20' : '' ?>">
             <div class="flex items-start">
                 <div class="w-10 h-10 bg-<?= $notification['color'] ?>-100 dark:bg-<?= $notification['color'] ?>-900 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                     <i class="<?= $notification['icon'] ?> text-<?= $notification['color'] ?>-600 dark:text-<?= $notification['color'] ?>-400"></i>
@@ -73,7 +74,7 @@ class Notifications
                 'color' => 'green',
                 'message' => 'Your leave request for <span class="font-medium">Dec 25-27</span> has been approved',
                 'time' => '10 minutes ago',
-                'read' => false
+                'read' => false,
             ],
             [
                 'id' => 2,
@@ -82,17 +83,17 @@ class Notifications
                 'color' => 'blue',
                 'message' => '<span class="font-medium">Sarah Johnson</span> joined your team',
                 'time' => '2 hours ago',
-                'read' => false
+                'read' => false,
             ],
             [
                 'id' => 3,
                 'type' => 'birthday',
                 'icon' => 'fas fa-birthday-cake',
                 'color' => 'purple',
-                'message' => 'Today is <span class="font-medium">Michael Chen\'s</span> birthday! 🎉',
+                'message' => 'Today is <span class="font-medium">Michael Chen\'s</span> birthday! ðŸŽ‰',
                 'time' => '8:00 AM',
-                'read' => true
-            ]
+                'read' => true,
+            ],
         ];
     }
 }

@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Layout/LayoutManager.php (Refactored)
+
 namespace App\Core\Layout;
 
 use App\Core\Security\SessionManager;
@@ -15,7 +17,7 @@ class LayoutManager
     private LayoutRenderer $layoutRenderer;
     private ComponentRenderer $componentRenderer;
     private string $currentLayout = 'main';
-    
+
     public function __construct(
         SessionManager $sessionManager,
         ComponentRegistry $componentRegistry
@@ -24,7 +26,7 @@ class LayoutManager
         $this->viewRenderer = new ViewRenderer();
         $this->componentRenderer = new ComponentRenderer($componentRegistry);
         $this->layoutRenderer = new LayoutRenderer($this->viewRenderer, $this->componentRenderer);
-        
+
         // Initialize data container with defaults
         $this->dataContainer = new ViewDataContainer([
             'title' => 'Harmony HRMS',
@@ -32,64 +34,70 @@ class LayoutManager
             'breadcrumbs' => [],
             'pageActions' => [],
             'pageDescription' => '',
-            'helpLink' => '#'
+            'helpLink' => '#',
         ]);
     }
-    
+
     /**
      * Set the layout to use
      */
     public function setLayout(string $layout): self
     {
         $this->currentLayout = $layout;
+
         return $this;
     }
-    
+
     /**
      * Add data to the view
      */
     public function with(array $data): self
     {
         $this->dataContainer->with($data);
+
         return $this;
     }
-    
+
     /**
      * Set breadcrumbs
      */
     public function setBreadcrumbs(array $breadcrumbs): self
     {
         $this->dataContainer->set('breadcrumbs', $breadcrumbs);
+
         return $this;
     }
-    
+
     /**
      * Set page actions
      */
     public function setPageActions(array $actions): self
     {
         $this->dataContainer->set('pageActions', $actions);
+
         return $this;
     }
-    
+
     /**
      * Set page description
      */
     public function setPageDescription(string $description): self
     {
         $this->dataContainer->set('pageDescription', $description);
+
         return $this;
     }
-    
+
     /**
      * Set help link
      */
     public function setHelpLink(string $link): self
     {
         $this->dataContainer->set('helpLink', $link);
+
         return $this;
     }
-    
+
     /**
      * Render the view with layout
      */
@@ -97,14 +105,14 @@ class LayoutManager
     {
         // Merge all data
         $data = array_merge($this->dataContainer->all(), $viewData);
-        
+
         // Render the view content
         $content = $this->viewRenderer->render($view, $data);
-        
+
         // Display with layout
         $this->layoutRenderer->displayWithLayout($this->currentLayout, $content, $data);
     }
-    
+
     /**
      * Render a component
      */

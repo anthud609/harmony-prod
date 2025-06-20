@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Core\Http;
 
 class Response
@@ -10,6 +11,7 @@ class Response
     public function setStatusCode(int $code): self
     {
         $this->statusCode = $code;
+
         return $this;
     }
 
@@ -21,12 +23,14 @@ class Response
     public function setHeader(string $name, string $value): self
     {
         $this->headers[$name] = $value;
+
         return $this;
     }
 
     public function setContent(string $content): self
     {
         $this->content = $content;
+
         return $this;
     }
 
@@ -43,6 +47,7 @@ class Response
         $this->setStatusCode($status);
         $this->setHeader('Location', $url);
         $this->setContent('');
+
         return $this;
     }
 
@@ -54,6 +59,7 @@ class Response
         $this->setStatusCode($status);
         $this->setHeader('Content-Type', 'application/json');
         $this->setContent(json_encode($data));
+
         return $this;
     }
 

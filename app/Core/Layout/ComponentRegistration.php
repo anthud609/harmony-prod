@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Layout/ComponentRegistration.php (New)
+
 namespace App\Core\Layout;
 
 /**

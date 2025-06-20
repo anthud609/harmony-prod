@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Http/Middleware/ErrorHandlerMiddleware.php
+
 namespace App\Core\Http\Middleware;
 
 use App\Core\Http\Request;
@@ -10,13 +12,13 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
 {
     private LoggerInterface $logger;
     private bool $debug;
-    
+
     public function __construct(LoggerInterface $logger, bool $debug = false)
     {
         $this->logger = $logger;
         $this->debug = $debug;
     }
-    
+
     public function handle(Request $request, callable $next): Response
     {
         try {
@@ -28,39 +30,40 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'uri' => $request->getUri(),
-                'method' => $request->getMethod()
+                'method' => $request->getMethod(),
             ]);
-            
+
             // For API requests, return JSON error
             if (strpos($request->getUri(), '/api/') === 0) {
                 $data = ['error' => 'Internal server error'];
-                
+
                 if ($this->debug) {
                     $data['debug'] = [
                         'message' => $e->getMessage(),
                         'file' => $e->getFile(),
-                        'line' => $e->getLine()
+                        'line' => $e->getLine(),
                     ];
                 }
-                
+
                 return (new Response())->json($data, 500);
             }
-            
+
             // For regular requests, return HTML error
             $response = new Response();
             $response->setStatusCode(500);
-            
+
             if ($this->debug) {
                 $content = $this->renderDebugError($e);
             } else {
                 $content = $this->renderProductionError();
             }
-            
+
             $response->setContent($content);
+
             return $response;
         }
     }
-    
+
     private function renderDebugError(\Exception $e): string
     {
         return sprintf(
@@ -94,7 +97,7 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
             htmlspecialchars($e->getTraceAsString())
         );
     }
-    
+
     private function renderProductionError(): string
     {
         return '<!DOCTYPE html>

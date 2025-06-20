@@ -1,12 +1,14 @@
 <?php
+
 // File: app/Core/Container/Providers/ApiServiceProvider.php
+
 namespace App\Core\Container\Providers;
 
-use App\Core\Container\ServiceProviderInterface;
-use App\Core\Api\Controllers\SessionController;
-use App\Core\Api\Controllers\SearchController;
 use App\Core\Api\Controllers\MessagesController;
 use App\Core\Api\Controllers\NotificationsController;
+use App\Core\Api\Controllers\SearchController;
+use App\Core\Api\Controllers\SessionController;
+use App\Core\Container\ServiceProviderInterface;
 use App\Core\Security\SessionManager;
 
 class ApiServiceProvider implements ServiceProviderInterface

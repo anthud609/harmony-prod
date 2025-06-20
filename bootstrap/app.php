@@ -1,4 +1,5 @@
 <?php
+
 // File: bootstrap/app.php
 // Manual bootstrap for the application
 
@@ -14,10 +15,10 @@ spl_autoload_register(function ($class) use ($basePath) {
     if (strpos($class, 'App\\') !== 0) {
         return;
     }
-    
+
     // Convert namespace to file path
     $file = $basePath . '/' . str_replace('\\', '/', $class) . '.php';
-    
+
     if (file_exists($file)) {
         require $file;
     }
@@ -26,9 +27,9 @@ spl_autoload_register(function ($class) use ($basePath) {
 // Load helper files in correct order
 $helpers = [
     'config.php',
-    'csrf.php', 
+    'csrf.php',
     'xss.php',
-    'logger.php'
+    'logger.php',
 ];
 
 foreach ($helpers as $helper) {

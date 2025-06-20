@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Security/CsrfException.php
+
 namespace App\Core\Security;
 
 use Exception;

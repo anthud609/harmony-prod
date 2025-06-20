@@ -1,4 +1,5 @@
 <?php
+
 // File: routes/web.php
 use App\Core\Dashboard\Controllers\DashboardController;
 use App\Modules\IAM\Controllers\AuthController;

@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Layout/CachedComponentRenderer.php
+
 namespace App\Core\Layout;
 
 use App\Core\Traits\LoggerTrait;
@@ -10,7 +12,7 @@ use App\Core\Traits\LoggerTrait;
 class CachedComponentRenderer extends ComponentRenderer
 {
     use LoggerTrait;
-    
+
     private array $cacheConfig = [
         // Component => TTL in seconds (0 = no cache)
         'sidebar' => 3600,      // 1 hour
@@ -23,11 +25,11 @@ class CachedComponentRenderer extends ComponentRenderer
         'userMenu' => 0,        // Don't cache (user-specific)
         'commandPalette' => 300, // 5 minutes
     ];
-    
+
     private ?object $cacheDriver = null;
     private bool $cacheEnabled = true;
     private string $cachePrefix = 'harmony:component:';
-    
+
     public function __construct(
         ComponentRegistry $registry,
         ?object $cacheDriver = null,
@@ -37,37 +39,39 @@ class CachedComponentRenderer extends ComponentRenderer
         $this->cacheDriver = $cacheDriver;
         $this->cacheEnabled = $cacheEnabled && $cacheDriver !== null;
     }
-    
+
     /**
      * Render a component with caching
      */
     public function render(string $componentName, array $data = []): void
     {
         // Check if caching is enabled and component is cacheable
-        if (!$this->shouldCache($componentName)) {
+        if (! $this->shouldCache($componentName)) {
             parent::render($componentName, $data);
+
             return;
         }
-        
+
         // Generate cache key
         $cacheKey = $this->generateCacheKey($componentName, $data);
-        
+
         // Try to get from cache
         $cached = $this->getFromCache($cacheKey);
         if ($cached !== null) {
             $this->logDebug("Component rendered from cache", [
                 'component' => $componentName,
-                'cacheKey' => $cacheKey
+                'cacheKey' => $cacheKey,
             ]);
             echo $cached;
+
             return;
         }
-        
+
         // Render and cache
         ob_start();
         parent::render($componentName, $data);
         $output = ob_get_clean();
-        
+
         // Store in cache
         $ttl = $this->cacheConfig[$componentName] ?? 0;
         if ($ttl > 0) {
@@ -75,27 +79,28 @@ class CachedComponentRenderer extends ComponentRenderer
             $this->logDebug("Component cached", [
                 'component' => $componentName,
                 'ttl' => $ttl,
-                'cacheKey' => $cacheKey
+                'cacheKey' => $cacheKey,
             ]);
         }
-        
+
         echo $output;
     }
-    
+
     /**
      * Check if component should be cached
      */
     private function shouldCache(string $componentName): bool
     {
-        if (!$this->cacheEnabled) {
+        if (! $this->cacheEnabled) {
             return false;
         }
-        
+
         // Check if component has cache configuration
         $ttl = $this->cacheConfig[$componentName] ?? 0;
+
         return $ttl > 0;
     }
-    
+
     /**
      * Generate cache key for component
      */
@@ -103,13 +108,13 @@ class CachedComponentRenderer extends ComponentRenderer
     {
         // Extract cache-relevant data
         $cacheData = $this->extractCacheableData($componentName, $data);
-        
+
         // Create a deterministic key
         $key = $this->cachePrefix . $componentName . ':' . md5(serialize($cacheData));
-        
+
         return $key;
     }
-    
+
     /**
      * Extract only cacheable data (exclude user-specific data for some components)
      */
@@ -120,66 +125,67 @@ class CachedComponentRenderer extends ComponentRenderer
                 // Sidebar might vary by user role
                 return [
                     'role' => $data['user']['role'] ?? 'user',
-                    'theme' => $data['user']['preferredTheme'] ?? 'light'
+                    'theme' => $data['user']['preferredTheme'] ?? 'light',
                 ];
-                
+
             case 'header':
                 // Header varies by theme only (user menu is separate)
                 return [
-                    'theme' => $data['user']['preferredTheme'] ?? 'light'
+                    'theme' => $data['user']['preferredTheme'] ?? 'light',
                 ];
-                
+
             case 'scripts':
             case 'globalScripts':
                 // Scripts might vary by environment
                 return [
-                    'env' => $_ENV['APP_ENV'] ?? 'production'
+                    'env' => $_ENV['APP_ENV'] ?? 'production',
                 ];
-                
+
             default:
                 return [];
         }
     }
-    
+
     /**
      * Get from cache
      */
     private function getFromCache(string $key): ?string
     {
-        if (!$this->cacheDriver) {
+        if (! $this->cacheDriver) {
             return null;
         }
-        
+
         try {
             // Redis implementation
             if (method_exists($this->cacheDriver, 'get')) {
                 return $this->cacheDriver->get($key) ?: null;
             }
-            
+
             // File cache implementation
             if (method_exists($this->cacheDriver, 'fetch')) {
                 $cached = $this->cacheDriver->fetch($key);
+
                 return $cached !== false ? $cached : null;
             }
         } catch (\Exception $e) {
             $this->logError("Cache read failed", [
                 'key' => $key,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
-        
+
         return null;
     }
-    
+
     /**
      * Store in cache
      */
     private function storeInCache(string $key, string $value, int $ttl): void
     {
-        if (!$this->cacheDriver) {
+        if (! $this->cacheDriver) {
             return;
         }
-        
+
         try {
             // Redis implementation
             if (method_exists($this->cacheDriver, 'setex')) {
@@ -196,20 +202,20 @@ class CachedComponentRenderer extends ComponentRenderer
         } catch (\Exception $e) {
             $this->logError("Cache write failed", [
                 'key' => $key,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
-    
+
     /**
      * Clear cache for specific component or all components
      */
     public function clearCache(?string $componentName = null): void
     {
-        if (!$this->cacheDriver) {
+        if (! $this->cacheDriver) {
             return;
         }
-        
+
         try {
             if ($componentName) {
                 // Clear specific component cache
@@ -226,7 +232,7 @@ class CachedComponentRenderer extends ComponentRenderer
             $this->logError("Cache clear failed", ['error' => $e->getMessage()]);
         }
     }
-    
+
     /**
      * Clear cache by pattern
      */
@@ -243,7 +249,7 @@ class CachedComponentRenderer extends ComponentRenderer
             $this->cacheDriver->deleteByPattern($pattern);
         }
     }
-    
+
     /**
      * Set cache configuration for a component
      */
@@ -251,7 +257,7 @@ class CachedComponentRenderer extends ComponentRenderer
     {
         $this->cacheConfig[$componentName] = $ttl;
     }
-    
+
     /**
      * Disable cache for specific component
      */

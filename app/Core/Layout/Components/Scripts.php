@@ -1,16 +1,17 @@
 <?php
 // File: app/Core/Layout/Components/Scripts.php
+
 namespace App\Core\Layout\Components;
 
 class Scripts
 {
     private GlobalScripts $globalScripts;
-    
+
     public function __construct(GlobalScripts $globalScripts)
     {
         $this->globalScripts = $globalScripts;
     }
-    
+
     public function render(array $data = []): void
     {
         $user = $data['user'] ?? [];

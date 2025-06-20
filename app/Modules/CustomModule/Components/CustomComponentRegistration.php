@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Modules/CustomModule/Components/CustomComponentRegistration.php (Example)
+
 namespace App\Modules\CustomModule\Components;
 
 use App\Core\Layout\ComponentRegistration;

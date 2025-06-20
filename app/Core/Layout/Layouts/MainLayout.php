@@ -67,12 +67,12 @@
     <!-- Main content -->
     <main id="mainContent" class="pt-16 lg:pl-64 transition-all duration-300">
         <!-- Page Header Component -->
-        <?php if (!empty($breadcrumbs) || !empty($pageTitle) || !empty($pageActions)): ?>
+        <?php if (! empty($breadcrumbs) || ! empty($pageTitle) || ! empty($pageActions)): ?>
             <?php $this->component('pageHeader'); ?>
         <?php endif; ?>
         
         <!-- Page Content -->
-        <div class="<?= (!empty($breadcrumbs) || !empty($pageTitle) || !empty($pageActions)) ? '' : 'pt-6' ?>">
+        <div class="<?= (! empty($breadcrumbs) || ! empty($pageTitle) || ! empty($pageActions)) ? '' : 'pt-6' ?>">
             <?= $content ?>
         </div>
     </main>
@@ -94,7 +94,7 @@ window.SessionHandler = {
     sessionStartTime: Date.now(),
     
     init() {
-        console.log('🚀 Session Handler Initializing...');
+        console.log('ðŸš€ Session Handler Initializing...');
         console.log('Config:', {
             warningTime: this.warningTime,
             checkInterval: this.checkInterval,
@@ -113,7 +113,7 @@ window.SessionHandler = {
             clearInterval(this.timer);
         }
         
-        console.log('⏰ Starting session monitoring, checking every', this.checkInterval/1000, 'seconds');
+        console.log('â° Starting session monitoring, checking every', this.checkInterval/1000, 'seconds');
         
         this.timer = setInterval(() => {
             this.checkSessionStatus();
@@ -122,7 +122,7 @@ window.SessionHandler = {
     
     async checkSessionStatus() {
         const checkTime = new Date().toLocaleTimeString();
-        console.log(`🔍 [${checkTime}] Checking session status...`);
+        console.log(`ðŸ” [${checkTime}] Checking session status...`);
         
         try {
             const response = await fetch('/api/session-status', {
@@ -132,44 +132,44 @@ window.SessionHandler = {
                 }
             });
             
-            console.log('📡 Response status:', response.status);
+            console.log('ðŸ“¡ Response status:', response.status);
             
             if (!response.ok) {
-                console.error('❌ Session check failed - not authenticated');
+                console.error('âŒ Session check failed - not authenticated');
                 this.handleSessionExpired();
                 return;
             }
             
             const data = await response.json();
-            console.log('📊 Session data:', data);
+            console.log('ðŸ“Š Session data:', data);
             
             const remainingTime = data.remainingTime || 0;
             const remainingMinutes = Math.floor(remainingTime / 60);
             const remainingSeconds = remainingTime % 60;
             
-            console.log(`⏳ Remaining time: ${remainingMinutes}m ${remainingSeconds}s (${remainingTime} total seconds)`);
-            console.log(`⚠️  Warning will show at: ${this.warningTime} seconds`);
+            console.log(`â³ Remaining time: ${remainingMinutes}m ${remainingSeconds}s (${remainingTime} total seconds)`);
+            console.log(`âš ï¸  Warning will show at: ${this.warningTime} seconds`);
             
             if (remainingTime <= 0) {
-                console.error('💀 Session expired (remaining time: 0)');
+                console.error('ðŸ’€ Session expired (remaining time: 0)');
                 this.handleSessionExpired();
             } else if (remainingTime <= this.warningTime && !this.warningShown) {
-                console.warn('⚠️ Showing warning - remaining time:', remainingTime);
+                console.warn('âš ï¸ Showing warning - remaining time:', remainingTime);
                 this.showWarning(remainingTime);
             } else if (remainingTime > this.warningTime && this.warningShown) {
-                console.log('✅ Session extended - hiding warning');
+                console.log('âœ… Session extended - hiding warning');
                 this.hideWarning();
             } else {
-                console.log('✅ Session OK');
+                console.log('âœ… Session OK');
             }
             
         } catch (error) {
-            console.error('🚨 Session check error:', error);
+            console.error('ðŸš¨ Session check error:', error);
         }
     },
     
     setupActivityListeners() {
-        console.log('👂 Setting up activity listeners...');
+        console.log('ðŸ‘‚ Setting up activity listeners...');
         
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
         let lastExtension = 0;
@@ -179,7 +179,7 @@ window.SessionHandler = {
                 const now = Date.now();
                 // Only log and extend every 30 seconds to avoid spam
                 if (now - lastExtension > 30000) {
-                    console.log('🖱️ User activity detected:', event);
+                    console.log('ðŸ–±ï¸ User activity detected:', event);
                     lastExtension = now;
                     this.extendSession();
                 }
@@ -188,7 +188,7 @@ window.SessionHandler = {
     },
     
     async extendSession() {
-        console.log('📤 Extending session...');
+        console.log('ðŸ“¤ Extending session...');
         
         try {
             const response = await fetch('/api/extend-session', {
@@ -201,21 +201,21 @@ window.SessionHandler = {
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Session extended successfully:', data);
+                console.log('âœ… Session extended successfully:', data);
                 
                 if (this.warningShown) {
                     this.hideWarning();
                 }
             } else {
-                console.error('❌ Failed to extend session:', response.status);
+                console.error('âŒ Failed to extend session:', response.status);
             }
         } catch (error) {
-            console.error('🚨 Extension error:', error);
+            console.error('ðŸš¨ Extension error:', error);
         }
     },
     
     showWarning(remainingTime) {
-        console.log('🚨 SHOWING WARNING - Remaining time:', remainingTime, 'seconds');
+        console.log('ðŸš¨ SHOWING WARNING - Remaining time:', remainingTime, 'seconds');
         this.warningShown = true;
         
         // Rest of the warning code...
@@ -280,7 +280,7 @@ window.SessionHandler = {
     },
     
     hideWarning() {
-        console.log('✅ Hiding warning');
+        console.log('âœ… Hiding warning');
         this.warningShown = false;
         const warning = document.getElementById('session-warning');
         if (warning) {
@@ -289,7 +289,7 @@ window.SessionHandler = {
     },
     
     handleSessionExpired() {
-        console.error('💀 SESSION EXPIRED - Redirecting to login...');
+        console.error('ðŸ’€ SESSION EXPIRED - Redirecting to login...');
         
         if (this.timer) {
             clearInterval(this.timer);
@@ -330,14 +330,14 @@ window.SessionHandler = {
     },
     
     logout() {
-        console.log('👋 User logged out');
+        console.log('ðŸ‘‹ User logged out');
         window.location.href = '/logout';
     }
 };
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM Ready - Initializing Session Handler');
+    console.log('ðŸ“„ DOM Ready - Initializing Session Handler');
     SessionHandler.init();
 });
      </script>

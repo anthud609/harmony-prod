@@ -1,8 +1,9 @@
 <?php
+
 // File: app/Core/Helpers/xss.php
 // Global helper functions for XSS protection
 
-if (!function_exists('e')) {
+if (! function_exists('e')) {
     /**
      * Escape HTML entities in the given string (shorthand)
      */
@@ -12,7 +13,7 @@ if (!function_exists('e')) {
     }
 }
 
-if (!function_exists('attr')) {
+if (! function_exists('attr')) {
     /**
      * Escape HTML attributes
      */
@@ -22,7 +23,7 @@ if (!function_exists('attr')) {
     }
 }
 
-if (!function_exists('ejs')) {
+if (! function_exists('ejs')) {
     /**
      * Escape for JavaScript context
      */
@@ -32,7 +33,7 @@ if (!function_exists('ejs')) {
     }
 }
 
-if (!function_exists('eurl')) {
+if (! function_exists('eurl')) {
     /**
      * Escape URL parameters
      */
@@ -42,7 +43,7 @@ if (!function_exists('eurl')) {
     }
 }
 
-if (!function_exists('ecss')) {
+if (! function_exists('ecss')) {
     /**
      * Escape CSS values
      */
@@ -52,7 +53,7 @@ if (!function_exists('ecss')) {
     }
 }
 
-if (!function_exists('clean')) {
+if (! function_exists('clean')) {
     /**
      * Clean HTML (allow specific tags)
      */

@@ -1,5 +1,6 @@
 <?php
 // File: app/Core/Layout/Components/Sidebar.php
+
 namespace App\Core\Layout\Components;
 
 class Sidebar
@@ -16,9 +17,9 @@ class Sidebar
                 <div class="flex-1 overflow-y-auto px-3 space-y-1">
                     <?php
                     $menuItems = $this->getMenuItems();
-                    
-                    foreach ($menuItems as $item): 
-                        if (isset($item['dropdown'])): ?>
+
+        foreach ($menuItems as $item):
+            if (isset($item['dropdown'])): ?>
                             <div>
                                 <button onclick="toggleDropdown('<?= strtolower($item['label']) ?>Dropdown')"
                                         class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
@@ -51,7 +52,7 @@ class Sidebar
                                 <?php endif; ?>
                             </a>
                         <?php endif;
-                    endforeach; ?>
+        endforeach; ?>
                 </div>
 
                 <div class="p-4 border-t border-gray-200 dark:border-gray-700">
@@ -64,7 +65,7 @@ class Sidebar
         </aside>
         <?php
     }
-    
+
     private function getMenuItems(): array
     {
         return [
@@ -73,7 +74,7 @@ class Sidebar
                 'icon' => 'fas fa-home',
                 'label' => 'Dashboard',
                 'active' => true,
-                'badge' => ['text' => 'New', 'color' => 'indigo']
+                'badge' => ['text' => 'New', 'color' => 'indigo'],
             ],
             [
                 'icon' => 'fas fa-users',
@@ -82,7 +83,7 @@ class Sidebar
                     ['href' => '/employees', 'icon' => 'fas fa-list', 'label' => 'All Employees'],
                     ['href' => '/employees/add', 'icon' => 'fas fa-user-plus', 'label' => 'Add Employee'],
                     ['href' => '/departments', 'icon' => 'fas fa-sitemap', 'label' => 'Departments'],
-                ]
+                ],
             ],
             [
                 'icon' => 'fas fa-clock',
@@ -90,28 +91,28 @@ class Sidebar
                 'dropdown' => [
                     ['href' => '/attendance/today', 'icon' => 'fas fa-calendar-check', 'label' => 'Today'],
                     ['href' => '/attendance/history', 'icon' => 'fas fa-history', 'label' => 'History'],
-                ]
+                ],
             ],
             [
                 'href' => '/leave',
                 'icon' => 'fas fa-calendar-alt',
                 'label' => 'Leave',
-                'indicator' => 'orange'
+                'indicator' => 'orange',
             ],
             [
                 'href' => '/payroll',
                 'icon' => 'fas fa-money-check-alt',
-                'label' => 'Payroll'
+                'label' => 'Payroll',
             ],
             [
                 'href' => '/reports',
                 'icon' => 'fas fa-chart-bar',
-                'label' => 'Reports'
+                'label' => 'Reports',
             ],
             [
                 'href' => '/settings',
                 'icon' => 'fas fa-cog',
-                'label' => 'Settings'
+                'label' => 'Settings',
             ],
         ];
     }

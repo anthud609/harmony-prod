@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Core/Http/Kernel.php
+
 namespace App\Core\Http;
 
 use App\Core\Http\Middleware\MiddlewareInterface;
@@ -13,18 +14,19 @@ class Kernel
 {
     private array $middleware = [];
     private $container;
-    
+
     public function __construct($container)
     {
         $this->container = $container;
     }
-    
+
     public function addMiddleware(MiddlewareInterface $middleware): self
     {
         $this->middleware[] = $middleware;
+
         return $this;
     }
-    
+
     public function handle(Request $request): Response
     {
         // Build middleware chain
@@ -39,14 +41,15 @@ class Kernel
                 return $this->dispatch($request);
             }
         );
-        
+
         return $chain($request);
     }
-    
+
     private function dispatch(Request $request): Response
     {
         // Route to controller
         $router = $this->container->get(Router::class);
+
         return $router->dispatch($request);
     }
 }

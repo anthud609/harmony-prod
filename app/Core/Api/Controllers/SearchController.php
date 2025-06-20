@@ -1,30 +1,32 @@
 <?php
+
 // File: app/Core/Api/Controllers/SearchController.php
+
 namespace App\Core\Api\Controllers;
 
-use App\Core\Security\SessionManager;
-use App\Core\Traits\LoggerTrait;
 use App\Core\Http\Request;
 use App\Core\Http\Response;
+use App\Core\Security\SessionManager;
+use App\Core\Traits\LoggerTrait;
 
 class SearchController
 {
     use LoggerTrait;
-    
+
     private SessionManager $sessionManager;
-    
+
     // Configuration
     private const MIN_QUERY_LENGTH = 2;
     private const MAX_QUERY_LENGTH = 100;
     private const DEFAULT_LIMIT = 10;
     private const MAX_LIMIT = 50;
     private const SEARCH_TIMEOUT = 5; // seconds
-    
+
     public function __construct(SessionManager $sessionManager)
     {
         $this->sessionManager = $sessionManager;
     }
-    
+
     /**
      * Global search endpoint
      */
@@ -32,83 +34,83 @@ class SearchController
     {
         // Start timing
         $startTime = microtime(true);
-        
+
         try {
             // Check authentication
-            if (!$this->sessionManager->isLoggedIn()) {
+            if (! $this->sessionManager->isLoggedIn()) {
                 $this->logWarning('Unauthenticated search attempt');
+
                 return $this->jsonResponse(['error' => 'Not authenticated'], 401);
             }
-            
+
             // Parse request body
             $body = $request->getPost('body', '');
             if (empty($body)) {
                 // Try reading raw input for JSON requests
                 $rawInput = file_get_contents('php://input');
-                if (!empty($rawInput)) {
+                if (! empty($rawInput)) {
                     $body = $rawInput;
                 }
             }
-            
+
             $data = json_decode($body, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return $this->jsonResponse([
                     'error' => 'Invalid JSON',
-                    'message' => 'Request body must be valid JSON'
+                    'message' => 'Request body must be valid JSON',
                 ], 400);
             }
-            
+
             // Validate and sanitize input
             $query = trim($data['query'] ?? '');
             $limit = min(max((int)($data['limit'] ?? self::DEFAULT_LIMIT), 1), self::MAX_LIMIT);
-            
+
             // Validate query length
             if (strlen($query) < self::MIN_QUERY_LENGTH) {
                 return $this->jsonResponse([
                     'error' => 'Query too short',
-                    'message' => sprintf('Query must be at least %d characters', self::MIN_QUERY_LENGTH)
+                    'message' => sprintf('Query must be at least %d characters', self::MIN_QUERY_LENGTH),
                 ], 400);
             }
-            
+
             if (strlen($query) > self::MAX_QUERY_LENGTH) {
                 return $this->jsonResponse([
                     'error' => 'Query too long',
-                    'message' => sprintf('Query must not exceed %d characters', self::MAX_QUERY_LENGTH)
+                    'message' => sprintf('Query must not exceed %d characters', self::MAX_QUERY_LENGTH),
                 ], 400);
             }
-            
+
             $this->logInfo('Search performed', [
                 'query' => $query,
                 'limit' => $limit,
-                'user' => $this->sessionManager->get('user')['username'] ?? 'unknown'
+                'user' => $this->sessionManager->get('user')['username'] ?? 'unknown',
             ]);
-            
+
             // Perform search with timeout protection
             $results = $this->performSearchWithTimeout($query, $limit);
-            
+
             // Log performance
             $duration = round((microtime(true) - $startTime) * 1000, 2);
             $this->logDebug('Search completed', [
                 'query' => $query,
                 'resultCount' => count($results),
-                'duration_ms' => $duration
+                'duration_ms' => $duration,
             ]);
-            
+
             return $this->jsonResponse($results);
-            
         } catch (\Exception $e) {
             $this->logError('Search error', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return $this->jsonResponse([
                 'error' => 'Search failed',
-                'message' => 'An error occurred while searching. Please try again.'
+                'message' => 'An error occurred while searching. Please try again.',
             ], 500);
         }
     }
-    
+
     /**
      * Perform search with timeout protection
      */
@@ -116,40 +118,39 @@ class SearchController
     {
         $timeout = self::SEARCH_TIMEOUT;
         $startTime = time();
-        
+
         try {
             // In a real application, you might use:
             // - Elasticsearch, Algolia, or other search services
             // - Database full-text search
             // - Microservice architecture with circuit breakers
-            
+
             // For now, we'll use the mock search with timeout checks
             $results = $this->performSearch($query, $limit);
-            
+
             // Check if we've exceeded timeout
             if ((time() - $startTime) > $timeout) {
                 $this->logWarning('Search timeout exceeded', [
                     'query' => $query,
-                    'elapsed' => time() - $startTime
+                    'elapsed' => time() - $startTime,
                 ]);
-                
+
                 throw new \Exception('Search timeout');
             }
-            
+
             return $results;
-            
         } catch (\Exception $e) {
             // Log the timeout or error
             $this->logError('Search execution failed', [
                 'query' => $query,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             // Return partial results or empty array
             return [];
         }
     }
-    
+
     /**
      * Perform the actual search
      */
@@ -157,32 +158,32 @@ class SearchController
     {
         $results = [];
         $queryLower = strtolower($query);
-        
+
         // Get user for permission checking
         $user = $this->sessionManager->getUser();
         $userRole = $user['role'] ?? 'user';
-        
+
         // Search employees (with permission check)
         if ($this->canSearchEmployees($userRole)) {
             $employeeResults = $this->searchEmployees($queryLower, $limit);
             $results = array_merge($results, $employeeResults);
         }
-        
+
         // Search documents
         $documentResults = $this->searchDocuments($queryLower, $limit);
         $results = array_merge($results, $documentResults);
-        
+
         // Search actions
         $actionResults = $this->searchActions($queryLower, $userRole, $limit);
         $results = array_merge($results, $actionResults);
-        
+
         // Score and sort results by relevance
         $results = $this->scoreAndSortResults($results, $queryLower);
-        
+
         // Limit results
         return array_slice($results, 0, $limit);
     }
-    
+
     /**
      * Search employees
      */
@@ -196,16 +197,16 @@ class SearchController
             ['name' => 'Bob Smith', 'role' => 'Finance Director', 'department' => 'Finance', 'email' => 'bob.s@company.com'],
             ['name' => 'Charlie Brown', 'role' => 'Sales Representative', 'department' => 'Sales', 'email' => 'charlie.b@company.com'],
         ];
-        
+
         $results = [];
         foreach ($employees as $employee) {
             $score = $this->calculateRelevance($query, [
                 $employee['name'],
                 $employee['role'],
                 $employee['department'],
-                $employee['email']
+                $employee['email'],
             ]);
-            
+
             if ($score > 0) {
                 $results[] = [
                     'title' => $employee['name'],
@@ -214,14 +215,14 @@ class SearchController
                     'color' => 'indigo',
                     'url' => '/employees/view/' . urlencode($employee['name']),
                     'type' => 'employee',
-                    'score' => $score
+                    'score' => $score,
                 ];
             }
         }
-        
+
         return $results;
     }
-    
+
     /**
      * Search documents
      */
@@ -234,14 +235,14 @@ class SearchController
             ['title' => 'Code of Conduct', 'type' => 'PDF', 'updated' => '2023-12-10', 'tags' => ['ethics', 'behavior', 'standards']],
             ['title' => 'Benefits Guide', 'type' => 'Document', 'updated' => '2024-01-20', 'tags' => ['health', 'insurance', 'retirement']],
         ];
-        
+
         $results = [];
         foreach ($documents as $doc) {
             $score = $this->calculateRelevance($query, array_merge(
                 [$doc['title']],
                 $doc['tags']
             ));
-            
+
             if ($score > 0) {
                 $results[] = [
                     'title' => $doc['title'],
@@ -250,14 +251,14 @@ class SearchController
                     'color' => 'green',
                     'url' => '/documents/view/' . urlencode($doc['title']),
                     'type' => 'document',
-                    'score' => $score
+                    'score' => $score,
                 ];
             }
         }
-        
+
         return $results;
     }
-    
+
     /**
      * Search actions based on user permissions
      */
@@ -269,19 +270,19 @@ class SearchController
             ['title' => 'View Payroll', 'action' => 'view-payroll', 'permission' => 'finance', 'tags' => ['salary', 'payment', 'wages']],
             ['title' => 'Generate Reports', 'action' => 'generate-reports', 'permission' => 'manager', 'tags' => ['analytics', 'data', 'statistics']],
         ];
-        
+
         $results = [];
         foreach ($actions as $action) {
             // Check permissions
-            if (!$this->hasPermission($userRole, $action['permission'])) {
+            if (! $this->hasPermission($userRole, $action['permission'])) {
                 continue;
             }
-            
+
             $score = $this->calculateRelevance($query, array_merge(
                 [$action['title']],
                 $action['tags']
             ));
-            
+
             if ($score > 0) {
                 $results[] = [
                     'title' => $action['title'],
@@ -290,14 +291,14 @@ class SearchController
                     'color' => 'purple',
                     'action' => $action['action'],
                     'type' => 'action',
-                    'score' => $score
+                    'score' => $score,
                 ];
             }
         }
-        
+
         return $results;
     }
-    
+
     /**
      * Calculate relevance score for search results
      */
@@ -306,10 +307,10 @@ class SearchController
         $score = 0;
         $query = strtolower($query);
         $queryWords = explode(' ', $query);
-        
+
         foreach ($fields as $field) {
             $fieldLower = strtolower($field);
-            
+
             // Exact match
             if ($fieldLower === $query) {
                 $score += 10;
@@ -324,6 +325,7 @@ class SearchController
                 foreach ($queryWords as $word) {
                     if (strpos($fieldLower, $word) === false) {
                         $allWordsFound = false;
+
                         break;
                     }
                 }
@@ -340,27 +342,28 @@ class SearchController
                 }
             }
         }
-        
+
         return $score;
     }
-    
+
     /**
      * Sort results by relevance score
      */
     private function scoreAndSortResults(array $results, string $query): array
     {
         // Sort by score descending
-        usort($results, function($a, $b) {
+        usort($results, function ($a, $b) {
             return $b['score'] <=> $a['score'];
         });
-        
+
         // Remove score from results
-        return array_map(function($result) {
+        return array_map(function ($result) {
             unset($result['score']);
+
             return $result;
         }, $results);
     }
-    
+
     /**
      * Check if user can search employees
      */
@@ -369,7 +372,7 @@ class SearchController
         // In production, use proper permission system
         return in_array($role, ['admin', 'hr', 'manager']);
     }
-    
+
     /**
      * Check if user has permission for action
      */
@@ -378,19 +381,20 @@ class SearchController
         if ($requiredPermission === 'all') {
             return true;
         }
-        
+
         // Simple role-based permission check
         $rolePermissions = [
             'admin' => ['hr', 'finance', 'manager'],
             'hr' => ['hr'],
             'manager' => ['manager'],
-            'finance' => ['finance']
+            'finance' => ['finance'],
         ];
-        
+
         $userPermissions = $rolePermissions[$userRole] ?? [];
+
         return in_array($requiredPermission, $userPermissions);
     }
-    
+
     /**
      * Helper to create JSON response
      */
@@ -400,6 +404,7 @@ class SearchController
         $response->setStatusCode($status);
         $response->setHeader('Content-Type', 'application/json');
         $response->setContent(json_encode($data));
+
         return $response;
     }
 }

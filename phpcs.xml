@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<ruleset name="Harmony HRMS Coding Standard">
+    <description>The coding standard for Harmony HRMS project</description>
+    
+    <!-- Paths to check -->
+    <file>app</file>
+    <file>bootstrap</file>
+    <file>config</file>
+    <file>routes</file>
+    
+    <!-- Paths to exclude -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/storage/*</exclude-pattern>
+    <exclude-pattern>*/cache/*</exclude-pattern>
+    
+    <!-- Use PSR-12 as base -->
+    <rule ref="PSR12">
+        <!-- Allow longer lines in views and component files -->
+        <exclude name="Generic.Files.LineLength" />
+    </rule>
+    
+    <!-- Configure line length for specific file types -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="150"/>
+        </properties>
+        <!-- Exclude view files and components from line length check -->
+        <exclude-pattern>*/Views/*</exclude-pattern>
+        <exclude-pattern>*/Components/*</exclude-pattern>
+    </rule>
+    
+    <!-- Additional rules -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+    <rule ref="Generic.Formatting.SpaceAfterNot"/>
+    <rule ref="Squiz.WhiteSpace.LogicalOperatorSpacing"/>
+    <rule ref="Squiz.ControlStructures.ControlSignature"/>
+    
+    <!-- Configure specific rules -->
+    <rule ref="PSR12.Operators.OperatorSpacing">
+        <properties>
+            <property name="ignoreNewlines" value="true"/>
+        </properties>
+    </rule>
+</ruleset>

@@ -1,5 +1,7 @@
 <?php
+
 // File: app/Core/Config/ConfigManager.php
+
 namespace App\Core\Config;
 
 use Dotenv\Dotenv;
@@ -10,12 +12,12 @@ class ConfigManager
     private array $config = [];
     private array $cache = [];
     private bool $loaded = false;
-    
+
     private function __construct()
     {
         // Don't auto-load in constructor to prevent recursion
     }
-    
+
     /**
      * Get singleton instance
      */
@@ -24,10 +26,10 @@ class ConfigManager
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        
+
         return self::$instance;
     }
-    
+
     /**
      * Initialize configuration (call this explicitly)
      */
@@ -36,19 +38,19 @@ class ConfigManager
         if ($this->loaded) {
             return;
         }
-        
+
         $this->loadEnvironment();
         $this->loadConfigurations();
         $this->loaded = true;
     }
-    
+
     /**
      * Load environment variables
      */
     private function loadEnvironment(): void
     {
         $rootPath = dirname(__DIR__, 3);
-        
+
         // Only load if .env exists
         if (file_exists($rootPath . '/.env')) {
             try {
@@ -60,24 +62,26 @@ class ConfigManager
             }
         }
     }
-    
+
     /**
      * Load all configuration files
      */
     private function loadConfigurations(): void
     {
         $configPath = dirname(__DIR__, 3) . '/config';
-        
+
         // If config directory doesn't exist, use defaults
-        if (!is_dir($configPath)) {
+        if (! is_dir($configPath)) {
             $this->loadDefaultConfigurations();
+
             return;
         }
-        
+
         // Load each config file
         $configFiles = glob($configPath . '/*.php');
         foreach ($configFiles as $file) {
             $name = basename($file, '.php');
+
             try {
                 $this->config[$name] = require $file;
             } catch (\Exception $e) {
@@ -87,7 +91,7 @@ class ConfigManager
             }
         }
     }
-    
+
     /**
      * Get default config by name
      */
@@ -106,7 +110,7 @@ class ConfigManager
                 return [];
         }
     }
-    
+
     /**
      * Load default configurations
      */
@@ -124,39 +128,39 @@ class ConfigManager
             'features' => $this->getFeatureConfig(),
         ];
     }
-    
+
     /**
      * Get configuration value using dot notation
      */
     public function get(string $key, $default = null)
     {
         // Ensure config is loaded
-        if (!$this->loaded) {
+        if (! $this->loaded) {
             $this->initialize();
         }
-        
+
         // Check cache first
         if (isset($this->cache[$key])) {
             return $this->cache[$key];
         }
-        
+
         // Parse dot notation
         $keys = explode('.', $key);
         $value = $this->config;
-        
+
         foreach ($keys as $k) {
-            if (!isset($value[$k])) {
+            if (! isset($value[$k])) {
                 return $default;
             }
             $value = $value[$k];
         }
-        
+
         // Cache the result
         $this->cache[$key] = $value;
-        
+
         return $value;
     }
-    
+
     /**
      * Set configuration value
      */
@@ -164,22 +168,22 @@ class ConfigManager
     {
         $keys = explode('.', $key);
         $config = &$this->config;
-        
+
         foreach ($keys as $i => $k) {
             if ($i === count($keys) - 1) {
                 $config[$k] = $value;
             } else {
-                if (!isset($config[$k]) || !is_array($config[$k])) {
+                if (! isset($config[$k]) || ! is_array($config[$k])) {
                     $config[$k] = [];
                 }
                 $config = &$config[$k];
             }
         }
-        
+
         // Clear cache for this key
         unset($this->cache[$key]);
     }
-    
+
     /**
      * Check if configuration exists
      */
@@ -187,29 +191,30 @@ class ConfigManager
     {
         return $this->get($key) !== null;
     }
-    
+
     /**
      * Get all configuration
      */
     public function all(): array
     {
-        if (!$this->loaded) {
+        if (! $this->loaded) {
             $this->initialize();
         }
+
         return $this->config;
     }
-    
+
     /**
      * Get environment variable with fallback
      */
     public function env(string $key, $default = null)
     {
         $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-        
+
         if ($value === false) {
             return $default;
         }
-        
+
         // Convert string booleans
         if (is_string($value)) {
             $valueLower = strtolower($value);
@@ -223,12 +228,12 @@ class ConfigManager
                 return null;
             }
         }
-        
+
         return $value;
     }
-    
+
     // Default configuration methods
-    
+
     private function getAppConfig(): array
     {
         return [
@@ -242,7 +247,7 @@ class ConfigManager
             'cipher' => 'AES-256-CBC',
         ];
     }
-    
+
     private function getDatabaseConfig(): array
     {
         return [
@@ -264,7 +269,7 @@ class ConfigManager
             ],
         ];
     }
-    
+
     private function getCacheConfig(): array
     {
         return [
@@ -283,7 +288,7 @@ class ConfigManager
             'ttl' => (int) $this->env('CACHE_DEFAULT_TTL', 3600),
         ];
     }
-    
+
     private function getSessionConfig(): array
     {
         return [
@@ -305,7 +310,7 @@ class ConfigManager
             'same_site' => $this->env('SESSION_COOKIE_SAMESITE', 'lax'),
         ];
     }
-    
+
     private function getLoggingConfig(): array
     {
         return [
@@ -320,7 +325,7 @@ class ConfigManager
             ],
         ];
     }
-    
+
     private function getSecurityConfig(): array
     {
         return [
@@ -332,7 +337,7 @@ class ConfigManager
             ],
         ];
     }
-    
+
     private function getApiConfig(): array
     {
         return [
@@ -342,7 +347,7 @@ class ConfigManager
             'debug' => $this->env('API_DEBUG_ENABLED', false),
         ];
     }
-    
+
     private function getSearchConfig(): array
     {
         return [
@@ -353,7 +358,7 @@ class ConfigManager
             'cache_ttl' => (int) $this->env('SEARCH_CACHE_TTL', 300),
         ];
     }
-    
+
     private function getFeatureConfig(): array
     {
         return [
