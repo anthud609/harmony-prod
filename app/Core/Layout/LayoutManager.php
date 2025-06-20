@@ -22,8 +22,8 @@ class LayoutManager
     ) {
         // Initialize sub-components
         $this->viewRenderer = new ViewRenderer();
-        $this->layoutRenderer = new LayoutRenderer($this->viewRenderer);
         $this->componentRenderer = new ComponentRenderer($componentRegistry);
+        $this->layoutRenderer = new LayoutRenderer($this->viewRenderer, $this->componentRenderer);
         
         // Initialize data container with defaults
         $this->dataContainer = new ViewDataContainer([
