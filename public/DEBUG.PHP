@@ -1,57 +1,97 @@
 <?php
-// File: public/simple-test.php
-// Simple test without dependency injection
+// File: public/check-logs.php
+// Check various log files for errors
 
-// Use the bootstrap
-require '../bootstrap/app.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-echo "<h1>Simple Test</h1>";
+echo "<h1>Log File Analysis</h1>";
 
-// Test 1: Environment
-echo "<h2>1. Environment Variables:</h2>";
-echo "APP_NAME: " . ($_ENV['APP_NAME'] ?? 'Not set') . "<br>";
-echo "APP_ENV: " . ($_ENV['APP_ENV'] ?? 'Not set') . "<br>";
-
-// Test 2: Config
-echo "<h2>2. Config Function:</h2>";
-try {
-    echo "App Name: " . config('app.name') . "<br>";
-    echo "App Environment: " . config('app.env') . "<br>";
-    echo "Session Lifetime: " . config('session.lifetime', 360) . "<br>";
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "<br>";
-}
-
-// Test 3: Session
-echo "<h2>3. Session:</h2>";
-if (isset($_SESSION['user'])) {
-    echo "✅ User logged in: " . $_SESSION['user']['username'] . "<br>";
-} else {
-    echo "❌ Not logged in<br>";
-}
-
-// Test 4: Simple routing simulation
-echo "<h2>4. Simple Dashboard Test:</h2>";
-if (isset($_SESSION['user'])) {
-    // Mock dashboard data
-    $stats = [
-        'totalEmployees' => 284,
-        'presentToday' => 270,
-        'onLeave' => 14,
-        'newApplications' => 8
-    ];
-    
-    echo "<div style='border: 1px solid #ccc; padding: 20px; margin: 10px 0;'>";
-    echo "<h3>Dashboard Stats</h3>";
-    foreach ($stats as $key => $value) {
-        echo "$key: $value<br>";
+// PHP Error Log
+echo "<h2>PHP Error Log</h2>";
+$errorLog = ini_get('error_log');
+if ($errorLog && file_exists($errorLog)) {
+    $lines = array_slice(file($errorLog), -30); // Last 30 lines
+    echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
+    foreach ($lines as $line) {
+        if (stripos($line, 'error') !== false) {
+            echo "<span style='color: red;'>" . htmlspecialchars($line) . "</span>";
+        } elseif (stripos($line, 'warning') !== false) {
+            echo "<span style='color: orange;'>" . htmlspecialchars($line) . "</span>";
+        } else {
+            echo htmlspecialchars($line);
+        }
     }
-    echo "</div>";
-    
-    echo "<p>✅ Dashboard data loaded successfully!</p>";
-    echo "<p><a href='dashboard'>Try full dashboard</a></p>";
+    echo "</pre>";
 } else {
-    echo "<p>You need to be logged in to see dashboard</p>";
-    echo "<p><a href='login-test.php'>Run login test first</a></p>";
+    echo "<p>PHP error log not found at: " . $errorLog . "</p>";
 }
-?>
+
+// Apache Error Log (Windows XAMPP typical location)
+echo "<h2>Apache Error Log</h2>";
+$apacheErrorLog = 'C:/xampp/apache/logs/error.log';
+if (file_exists($apacheErrorLog)) {
+    $lines = array_slice(file($apacheErrorLog), -20); // Last 20 lines
+    echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
+    echo htmlspecialchars(implode('', $lines));
+    echo "</pre>";
+} else {
+    echo "<p>Apache error log not found at typical location</p>";
+}
+
+// Application Logs
+echo "<h2>Application Logs</h2>";
+$appLogDir = __DIR__ . '/../storage/logs';
+if (is_dir($appLogDir)) {
+    $logFiles = glob($appLogDir . '/*.log');
+    if (!empty($logFiles)) {
+        foreach ($logFiles as $logFile) {
+            echo "<h3>" . basename($logFile) . "</h3>";
+            $lines = array_slice(file($logFile), -20); // Last 20 lines
+            echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
+            echo htmlspecialchars(implode('', $lines));
+            echo "</pre>";
+        }
+    } else {
+        echo "<p>No log files found in application logs directory</p>";
+    }
+} else {
+    echo "<p>Application logs directory not found</p>";
+}
+
+// Check for common issues
+echo "<h2>Common Issues Check</h2>";
+
+// Check if mod_rewrite is enabled
+if (function_exists('apache_get_modules')) {
+    $modules = apache_get_modules();
+    if (in_array('mod_rewrite', $modules)) {
+        echo "<p style='color: green;'>✓ mod_rewrite is enabled</p>";
+    } else {
+        echo "<p style='color: red;'>✗ mod_rewrite is NOT enabled</p>";
+    }
+} else {
+    echo "<p style='color: orange;'>⚠ Cannot check Apache modules (apache_get_modules not available)</p>";
+}
+
+// Check .htaccess
+$htaccess = __DIR__ . '/.htaccess';
+if (file_exists($htaccess)) {
+    echo "<p style='color: green;'>✓ .htaccess exists</p>";
+    echo "<h3>.htaccess content:</h3>";
+    echo "<pre style='background: #f0f0f0; padding: 10px;'>";
+    echo htmlspecialchars(file_get_contents($htaccess));
+    echo "</pre>";
+} else {
+    echo "<p style='color: red;'>✗ .htaccess NOT found</p>";
+}
+
+// Check for infinite redirects
+echo "<h2>Testing for Redirect Loops</h2>";
+echo "<p>If you're seeing endless loading, it's likely due to:</p>";
+echo "<ul>";
+echo "<li>Authentication middleware redirecting to /login</li>";
+echo "<li>Login page also requiring authentication</li>";
+echo "<li>Missing session initialization</li>";
+echo "<li>Incorrect .htaccess rules</li>";
+echo "</ul>";

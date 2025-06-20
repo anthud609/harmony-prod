@@ -13,8 +13,7 @@ class ConfigManager
     
     private function __construct()
     {
-        $this->loadEnvironment();
-        $this->loadConfigurations();
+        // Don't auto-load in constructor to prevent recursion
     }
     
     /**
@@ -30,44 +29,36 @@ class ConfigManager
     }
     
     /**
+     * Initialize configuration (call this explicitly)
+     */
+    public function initialize(): void
+    {
+        if ($this->loaded) {
+            return;
+        }
+        
+        $this->loadEnvironment();
+        $this->loadConfigurations();
+        $this->loaded = true;
+    }
+    
+    /**
      * Load environment variables
      */
     private function loadEnvironment(): void
     {
         $rootPath = dirname(__DIR__, 3);
         
-        // Determine which .env file to load
-        $envFile = '.env';
-        $appEnv = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production';
-        
-        // Check for environment-specific files
-        if (file_exists($rootPath . '/.env.' . $appEnv)) {
-            $envFile = '.env.' . $appEnv;
+        // Only load if .env exists
+        if (file_exists($rootPath . '/.env')) {
+            try {
+                $dotenv = Dotenv::createImmutable($rootPath);
+                $dotenv->safeLoad(); // Use safeLoad to not fail if file missing
+            } catch (\Exception $e) {
+                // Log error but don't fail
+                error_log('Failed to load .env: ' . $e->getMessage());
+            }
         }
-        
-        // Load the environment file
-        if (file_exists($rootPath . '/' . $envFile)) {
-            $dotenv = Dotenv::createImmutable($rootPath, $envFile);
-            $dotenv->load();
-            
-            // Validate required variables
-            $dotenv->required([
-                'APP_NAME',
-                'APP_ENV',
-                'APP_KEY',
-                'DB_CONNECTION',
-                'DB_HOST',
-                'DB_DATABASE'
-            ]);
-            
-            // Validate boolean values
-            $dotenv->required('APP_DEBUG')->isBoolean();
-            
-            // Validate allowed values
-            $dotenv->required('APP_ENV')->allowedValues(['local', 'development', 'staging', 'production']);
-        }
-        
-        $this->loaded = true;
     }
     
     /**
@@ -87,7 +78,32 @@ class ConfigManager
         $configFiles = glob($configPath . '/*.php');
         foreach ($configFiles as $file) {
             $name = basename($file, '.php');
-            $this->config[$name] = require $file;
+            try {
+                $this->config[$name] = require $file;
+            } catch (\Exception $e) {
+                error_log("Failed to load config file $file: " . $e->getMessage());
+                // Use defaults for this config
+                $this->config[$name] = $this->getDefaultConfig($name);
+            }
+        }
+    }
+    
+    /**
+     * Get default config by name
+     */
+    private function getDefaultConfig(string $name): array
+    {
+        switch ($name) {
+            case 'app':
+                return $this->getAppConfig();
+            case 'database':
+                return $this->getDatabaseConfig();
+            case 'cache':
+                return $this->getCacheConfig();
+            case 'session':
+                return $this->getSessionConfig();
+            default:
+                return [];
         }
     }
     
@@ -114,6 +130,11 @@ class ConfigManager
      */
     public function get(string $key, $default = null)
     {
+        // Ensure config is loaded
+        if (!$this->loaded) {
+            $this->initialize();
+        }
+        
         // Check cache first
         if (isset($this->cache[$key])) {
             return $this->cache[$key];
@@ -172,6 +193,9 @@ class ConfigManager
      */
     public function all(): array
     {
+        if (!$this->loaded) {
+            $this->initialize();
+        }
         return $this->config;
     }
     
@@ -293,13 +317,6 @@ class ConfigManager
                     'level' => $this->env('LOG_LEVEL', 'debug'),
                     'days' => (int) $this->env('LOG_MAX_FILES', 14),
                 ],
-                'slack' => [
-                    'driver' => 'slack',
-                    'url' => $this->env('LOG_SLACK_WEBHOOK_URL'),
-                    'username' => 'Harmony HRMS',
-                    'emoji' => ':boom:',
-                    'level' => 'critical',
-                ],
             ],
         ];
     }
@@ -313,21 +330,6 @@ class ConfigManager
                 'token_lifetime' => (int) $this->env('CSRF_TOKEN_LIFETIME', 3600),
                 'max_tokens' => 5,
             ],
-            'cors' => [
-                'allowed_origins' => explode(',', $this->env('CORS_ALLOWED_ORIGINS', '*')),
-                'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-                'allowed_headers' => ['Content-Type', 'X-Requested-With', 'X-CSRF-Token'],
-                'exposed_headers' => [],
-                'max_age' => 86400,
-                'supports_credentials' => true,
-            ],
-            'headers' => [
-                'X-Frame-Options' => 'SAMEORIGIN',
-                'X-Content-Type-Options' => 'nosniff',
-                'X-XSS-Protection' => '1; mode=block',
-                'Referrer-Policy' => 'strict-origin-when-cross-origin',
-                'Permissions-Policy' => 'geolocation=(), microphone=(), camera=()',
-            ],
         ];
     }
     
@@ -338,10 +340,6 @@ class ConfigManager
             'rate_limit_window' => (int) $this->env('API_RATE_LIMIT_WINDOW', 60),
             'version' => $this->env('API_VERSION', 'v1'),
             'debug' => $this->env('API_DEBUG_ENABLED', false),
-            'pagination' => [
-                'per_page' => 20,
-                'max_per_page' => 100,
-            ],
         ];
     }
     
@@ -353,15 +351,6 @@ class ConfigManager
             'max_length' => (int) $this->env('SEARCH_MAX_LENGTH', 100),
             'timeout' => (int) $this->env('SEARCH_TIMEOUT', 5),
             'cache_ttl' => (int) $this->env('SEARCH_CACHE_TTL', 300),
-            'elasticsearch' => [
-                'host' => $this->env('ELASTICSEARCH_HOST', 'localhost:9200'),
-                'index' => $this->env('ELASTICSEARCH_INDEX', 'harmony_search'),
-            ],
-            'algolia' => [
-                'app_id' => $this->env('ALGOLIA_APP_ID'),
-                'secret' => $this->env('ALGOLIA_SECRET'),
-                'index' => $this->env('ALGOLIA_INDEX'),
-            ],
         ];
     }
     

@@ -18,6 +18,9 @@ if (!function_exists('config')) {
     {
         $config = ConfigManager::getInstance();
         
+        // Initialize config if not loaded
+        $config->initialize();
+        
         if (is_null($key)) {
             return $config;
         }
@@ -43,16 +46,32 @@ if (!function_exists('env')) {
      */
     function env($key, $default = null)
     {
-        return ConfigManager::getInstance()->env($key, $default);
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+        
+        if ($value === false) {
+            return $default;
+        }
+        
+        // Convert string booleans
+        if (is_string($value)) {
+            $valueLower = strtolower($value);
+            if ($valueLower === 'true' || $valueLower === '(true)') {
+                return true;
+            }
+            if ($valueLower === 'false' || $valueLower === '(false)') {
+                return false;
+            }
+            if ($valueLower === 'null' || $valueLower === '(null)') {
+                return null;
+            }
+        }
+        
+        return $value;
     }
 }
 
+// Rest of the helper functions remain the same...
 if (!function_exists('app_name')) {
-    /**
-     * Get the application name.
-     *
-     * @return string
-     */
     function app_name()
     {
         return config('app.name', 'Harmony HRMS');
@@ -60,11 +79,6 @@ if (!function_exists('app_name')) {
 }
 
 if (!function_exists('app_env')) {
-    /**
-     * Get the application environment.
-     *
-     * @return string
-     */
     function app_env()
     {
         return config('app.env', 'production');
@@ -72,11 +86,6 @@ if (!function_exists('app_env')) {
 }
 
 if (!function_exists('is_production')) {
-    /**
-     * Check if application is in production.
-     *
-     * @return bool
-     */
     function is_production()
     {
         return app_env() === 'production';
@@ -84,11 +93,6 @@ if (!function_exists('is_production')) {
 }
 
 if (!function_exists('is_local')) {
-    /**
-     * Check if application is in local environment.
-     *
-     * @return bool
-     */
     function is_local()
     {
         return app_env() === 'local';
@@ -96,11 +100,6 @@ if (!function_exists('is_local')) {
 }
 
 if (!function_exists('is_debug')) {
-    /**
-     * Check if application is in debug mode.
-     *
-     * @return bool
-     */
     function is_debug()
     {
         return config('app.debug', false) === true;
@@ -108,13 +107,6 @@ if (!function_exists('is_debug')) {
 }
 
 if (!function_exists('feature')) {
-    /**
-     * Check if a feature is enabled.
-     *
-     * @param  string  $feature
-     * @param  bool  $default
-     * @return bool
-     */
     function feature($feature, $default = false)
     {
         return config('features.' . $feature, $default) === true;
@@ -122,12 +114,6 @@ if (!function_exists('feature')) {
 }
 
 if (!function_exists('storage_path')) {
-    /**
-     * Get the storage path.
-     *
-     * @param  string  $path
-     * @return string
-     */
     function storage_path($path = '')
     {
         $basePath = dirname(__DIR__, 3) . '/storage';
@@ -136,12 +122,6 @@ if (!function_exists('storage_path')) {
 }
 
 if (!function_exists('config_path')) {
-    /**
-     * Get the configuration path.
-     *
-     * @param  string  $path
-     * @return string
-     */
     function config_path($path = '')
     {
         $basePath = dirname(__DIR__, 3) . '/config';
@@ -150,12 +130,6 @@ if (!function_exists('config_path')) {
 }
 
 if (!function_exists('base_path')) {
-    /**
-     * Get the base path of the application.
-     *
-     * @param  string  $path
-     * @return string
-     */
     function base_path($path = '')
     {
         $basePath = dirname(__DIR__, 3);

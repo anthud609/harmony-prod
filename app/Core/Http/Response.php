@@ -36,10 +36,37 @@ class Response
     }
 
     /**
+     * Create a redirect response
+     */
+    public function redirect(string $url, int $status = 302): self
+    {
+        $this->setStatusCode($status);
+        $this->setHeader('Location', $url);
+        $this->setContent('');
+        return $this;
+    }
+
+    /**
+     * Create a JSON response
+     */
+    public function json($data, int $status = 200): self
+    {
+        $this->setStatusCode($status);
+        $this->setHeader('Content-Type', 'application/json');
+        $this->setContent(json_encode($data));
+        return $this;
+    }
+
+    /**
      * Actually send status, headers, and body to the client.
      */
     public function send(): void
     {
+        // Check if headers already sent
+        if (headers_sent()) {
+            return;
+        }
+
         // 1) Status code
         http_response_code($this->statusCode);
 
@@ -48,7 +75,9 @@ class Response
             header("$name: $value");
         }
 
-        // 3) Body
-        echo $this->content;
+        // 3) Body (only if not a redirect)
+        if ($this->statusCode < 300 || $this->statusCode >= 400) {
+            echo $this->content;
+        }
     }
 }

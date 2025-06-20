@@ -1,5 +1,4 @@
 <?php
-
 // File: app/Core/Http/Middleware/AuthenticationMiddleware.php
 namespace App\Core\Http\Middleware;
 
@@ -33,12 +32,13 @@ class AuthenticationMiddleware implements MiddlewareInterface
         if (!$this->sessionManager->isLoggedIn()) {
             // For API routes, return JSON error
             if (strpos($uri, '/api/') === 0) {
-                return (new Response())
-                    ->json(['error' => 'Authentication required'], 401);
+                $response = new Response();
+                return $response->json(['error' => 'Authentication required'], 401);
             }
             
             // For regular routes, redirect to login
-            return (new Response())->redirect('/login');
+            $response = new Response();
+            return $response->redirect('/login');
         }
         
         // Add user to request attributes

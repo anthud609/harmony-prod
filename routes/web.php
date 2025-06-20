@@ -1,18 +1,19 @@
 <?php
 // File: routes/web.php
+use App\Core\Dashboard\Controllers\DashboardController;
+use App\Modules\IAM\Controllers\AuthController;
 
-return [
-    // Authentication Routes
-    '/' => ['App\Modules\IAM\Controllers\AuthController', 'showLogin'],
-    '/login' => ['App\Modules\IAM\Controllers\AuthController', 'showLogin'],
-    '/login.post' => ['App\Modules\IAM\Controllers\AuthController', 'login'],
-    '/logout' => ['App\Modules\IAM\Controllers\AuthController', 'logout'],
-    
-    // Dashboard
-    '/dashboard' => ['App\Core\Dashboard\Controllers\DashboardController', 'index'],
-    '/dashboard/widget' => ['App\Core\Dashboard\Controllers\DashboardController', 'updateWidget'],
-    
-    // User Preferences
-    '/user/preferences' => ['App\Modules\IAM\Controllers\AuthController', 'updatePreferences'],
-    '/notifications/mark-read' => ['App\Modules\IAM\Controllers\AuthController', 'markNotificationsRead'],
-];
+// The $router variable is available from index.php
+
+// Auth routes
+$router->add('/login', [AuthController::class, 'showLogin']);
+$router->add('/login.post', [AuthController::class, 'login']); // POST to /login handled by router
+$router->add('/logout', [AuthController::class, 'logout']);
+
+// Protected routes
+$router->add('/', [DashboardController::class, 'index']);
+$router->add('/dashboard', [DashboardController::class, 'index']);
+
+// User preferences
+$router->add('/user/preferences', [AuthController::class, 'updatePreferences']);
+$router->add('/notifications/mark-read', [AuthController::class, 'markNotificationsRead']);

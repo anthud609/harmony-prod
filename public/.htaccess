@@ -19,10 +19,3 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
-
-# PHP Configuration (if allowed by server)
-<IfModule mod_php.c>
-    php_value session.gc_maxlifetime 3600
-    php_value session.gc_probability 1
-    php_value session.gc_divisor 100
-</IfModule>
