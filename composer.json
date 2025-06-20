@@ -11,7 +11,9 @@
         "files": [
             "app/Core/Helpers/csrf.php",
             "app/Core/Helpers/xss.php",
-            "app/Core/Helpers/logger.php"
+            "app/Core/Helpers/logger.php",
+            "app/Core/Helpers/config.php",
+            "app/Core/Helpers/url.php"
         ]
     }
 }

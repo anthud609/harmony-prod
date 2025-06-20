@@ -45,11 +45,35 @@ class Request
         return $this->server['REQUEST_METHOD'] ?? 'GET';
     }
     
-    public function getUri(): string
+public function getUri(): string
     {
-        return $this->server['REQUEST_URI'] ?? '/';
+        $uri = $this->server['REQUEST_URI'] ?? '/';
+        
+        // Remove query string
+        if ($pos = strpos($uri, '?')) {
+            $uri = substr($uri, 0, $pos);
+        }
+        
+        // For subfolder installations, we need to remove the base path
+        // e.g., /harmony-prod/public/login -> /login
+        $scriptName = $this->server['SCRIPT_NAME'] ?? '';
+        $scriptDir = dirname($scriptName);
+        
+        // If we're in a subdirectory (not root)
+        if ($scriptDir !== '/' && $scriptDir !== '\\') {
+            // Remove the subdirectory path if present
+            if (strpos($uri, $scriptDir) === 0) {
+                $uri = substr($uri, strlen($scriptDir));
+            }
+        }
+        
+        // Ensure URI starts with /
+        if (empty($uri) || $uri[0] !== '/') {
+            $uri = '/' . $uri;
+        }
+        
+        return $uri;
     }
-    
     public function setAttribute(string $key, $value): void
     {
         $this->attributes[$key] = $value;

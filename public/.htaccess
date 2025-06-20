@@ -1,14 +1,28 @@
-# Add these lines to your public/.htaccess file after the RewriteEngine rules
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
 
-# Session Configuration
-# Ensure PHP doesn't garbage collect sessions before our custom timeout
-php_value session.gc_maxlifetime 3600
-php_value session.gc_probability 1
-php_value session.gc_divisor 100
+    RewriteEngine On
 
-# Original rewrite rules
-RewriteEngine On
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# PHP Configuration (if allowed by server)
+<IfModule mod_php.c>
+    php_value session.gc_maxlifetime 3600
+    php_value session.gc_probability 1
+    php_value session.gc_divisor 100
+</IfModule>

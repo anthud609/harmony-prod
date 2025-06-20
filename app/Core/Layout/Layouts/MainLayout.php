@@ -82,6 +82,9 @@
     
     <!-- Session Handler Script -->
      <script>
+
+        // Store base URL for JavaScript
+        window.BASE_URL = '<?= base_url() ?>';
 // Debug Session Handler - Extensive Logging Version
 window.SessionHandler = {
     warningTime: 60, // Show warning 1 minute before timeout
