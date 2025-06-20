@@ -2,8 +2,12 @@
 // File: app/Modules/IAM/Services/AuthService.php
 namespace App\Modules\IAM\Services;
 
+use App\Core\Traits\LoggerTrait;
+
 class AuthService
 {
+    use LoggerTrait;
+    
     // Demo users - in production this would be from database
     private array $users = [
         'alice_admin@email.com' => [
@@ -40,11 +44,17 @@ class AuthService
      */
     public function authenticate(string $username, string $password): ?array
     {
+        $this->logDebug('Authentication attempt', ['username' => $username]);
+        
         if (!isset($this->users[$username]) || $this->users[$username]['password'] !== $password) {
+            $this->logWarning('Authentication failed', [
+                'username' => $username,
+                'reason' => !isset($this->users[$username]) ? 'user_not_found' : 'invalid_password'
+            ]);
             return null;
         }
         
-        return [
+        $userData = [
             'id' => array_search($username, array_keys($this->users)) + 1,
             'username' => $username,
             'role' => $this->users[$username]['role'],
@@ -56,6 +66,14 @@ class AuthService
             'loginTime' => time(),
             'lastActivity' => time()
         ];
+        
+        $this->logInfo('Authentication successful', [
+            'username' => $username,
+            'userId' => $userData['id'],
+            'role' => $userData['role']
+        ]);
+        
+        return $userData;
     }
     
     /**
@@ -63,11 +81,11 @@ class AuthService
      */
     public function logSuccessfulLogin(string $username): void
     {
-        error_log(sprintf(
-            'Successful login: User %s from IP %s',
-            $username,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-        ));
+        $this->logInfo('User login successful', [
+            'username' => $username,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ]);
     }
     
     /**
@@ -75,11 +93,11 @@ class AuthService
      */
     public function logFailedLogin(string $username): void
     {
-        error_log(sprintf(
-            'Failed login attempt: Username %s from IP %s',
-            $username,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-        ));
+        $this->logWarning('Login attempt failed', [
+            'username' => $username,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ]);
     }
     
     /**
@@ -87,11 +105,10 @@ class AuthService
      */
     public function logLogout(string $username): void
     {
-        error_log(sprintf(
-            'User logout: %s from IP %s',
-            $username,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-        ));
+        $this->logInfo('User logout', [
+            'username' => $username,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ]);
     }
     
     /**
@@ -100,7 +117,15 @@ class AuthService
     public function updateThemePreference(string $theme): bool
     {
         // Validate theme value
-        return in_array($theme, ['light', 'dark', 'system']);
+        $valid = in_array($theme, ['light', 'dark', 'system']);
+        
+        if ($valid) {
+            $this->logDebug('Theme preference updated', ['theme' => $theme]);
+        } else {
+            $this->logWarning('Invalid theme preference attempted', ['theme' => $theme]);
+        }
+        
+        return $valid;
     }
     
     /**
@@ -109,6 +134,6 @@ class AuthService
     public function markAllNotificationsRead(int $userId): void
     {
         // In production, update database
-        // For now, this is a no-op
+        $this->logDebug('Notifications marked as read', ['userId' => $userId]);
     }
 }

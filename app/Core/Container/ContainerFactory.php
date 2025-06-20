@@ -8,6 +8,7 @@ use App\Core\Container\Providers\SecurityServiceProvider;
 use App\Core\Container\Providers\LayoutServiceProvider;
 use App\Core\Container\Providers\ControllerServiceProvider;
 use App\Core\Container\Providers\ApiServiceProvider;
+use App\Core\Container\Providers\LoggingServiceProvider;
 
 class ContainerFactory
 {
@@ -32,6 +33,7 @@ class ContainerFactory
         
         // Add definitions from service providers
         $providers = [
+            new LoggingServiceProvider(), // Add logging first so other services can use it
             new SecurityServiceProvider(),
             new LayoutServiceProvider(),
             new ControllerServiceProvider(),
