@@ -1,5 +1,5 @@
 <?php
-// File: app/Core/Security/SessionManager.php
+// File: app/Core/Security/SessionManager.php (Updated with configuration)
 namespace App\Core\Security;
 
 use App\Core\Traits\LoggerTrait;
@@ -8,11 +8,18 @@ class SessionManager
 {
     use LoggerTrait;
     
-    private const SESSION_LIFETIME = 360; // 6 minutes total (5 min activity + 1 min warning)
-    private const SESSION_NAME = 'HARMONY_SESSID';
+    private int $sessionLifetime;
+    private string $sessionName;
     private const FINGERPRINT_KEY = '_session_fingerprint';
     private const LAST_ACTIVITY_KEY = '_last_activity';
     private const CREATED_TIME_KEY = '_created_time';
+    
+    public function __construct()
+    {
+        // Load configuration
+        $this->sessionLifetime = config('session.lifetime', 360);
+        $this->sessionName = config('session.cookie', 'HARMONY_SESSID');
+    }
     
     /**
      * Initialize secure session with proper configuration
@@ -35,32 +42,20 @@ class SessionManager
             return;
         }
         
-        // Configure session security settings
-        ini_set('session.use_only_cookies', '1');
-        ini_set('session.use_strict_mode', '1');
-        ini_set('session.cookie_httponly', '1');
-        ini_set('session.cookie_samesite', 'Lax');
-        
-        // IMPORTANT: Set gc_maxlifetime to be longer than our activity timeout
-        // This ensures PHP doesn't garbage collect our session prematurely
-        ini_set('session.gc_maxlifetime', '3600'); // 1 hour - much longer than our timeout
-        
-        // Use secure cookies if HTTPS
-        if ($this->isHttps()) {
-            ini_set('session.cookie_secure', '1');
-        }
+        // Configure session from environment/config
+        $this->configureSession();
         
         // Set custom session name
-        session_name(self::SESSION_NAME);
+        session_name($this->sessionName);
         
-        // Set session cookie parameters
+        // Set session cookie parameters from config
         session_set_cookie_params([
-            'lifetime' => 0, // Session cookie (expires on browser close)
-            'path' => '/',
-            'domain' => '',
-            'secure' => $this->isHttps(),
-            'httponly' => true,
-            'samesite' => 'Lax'
+            'lifetime' => config('session.expire_on_close') ? 0 : config('session.lifetime') * 60,
+            'path' => config('session.path', '/'),
+            'domain' => config('session.domain', ''),
+            'secure' => config('session.secure', $this->isHttps()),
+            'httponly' => config('session.http_only', true),
+            'samesite' => config('session.same_site', 'lax')
         ]);
         
         // Start the session
@@ -68,7 +63,8 @@ class SessionManager
         
         $this->logDebug('Session started', [
             'sessionId' => session_id(),
-            'sessionName' => session_name()
+            'sessionName' => session_name(),
+            'lifetime' => $this->sessionLifetime
         ]);
         
         // Validate session integrity
@@ -81,6 +77,44 @@ class SessionManager
                 'timestamp' => $_SESSION[self::LAST_ACTIVITY_KEY]
             ]);
         }
+    }
+    
+    /**
+     * Configure PHP session settings from config
+     */
+    private function configureSession(): void
+    {
+        // Basic settings
+        ini_set('session.use_only_cookies', '1');
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.cookie_httponly', '1');
+        ini_set('session.cookie_samesite', config('session.same_site', 'Lax'));
+        
+        // Set gc_maxlifetime based on config
+        $gcMaxLifetime = max(
+            config('session.lifetime', 360) * 2, // Double the session lifetime
+            3600 // Minimum 1 hour
+        );
+        ini_set('session.gc_maxlifetime', (string)$gcMaxLifetime);
+        
+        // Use secure cookies if HTTPS
+        if ($this->isHttps() || config('session.secure', false)) {
+            ini_set('session.cookie_secure', '1');
+        }
+        
+        // Set session save path if configured
+        if (config('session.driver') === 'file') {
+            $savePath = config('session.files', storage_path('sessions'));
+            if (!is_dir($savePath)) {
+                mkdir($savePath, 0755, true);
+            }
+            session_save_path($savePath);
+        }
+        
+        // Configure session garbage collection
+        $lottery = config('session.lottery', [2, 100]);
+        ini_set('session.gc_probability', (string)$lottery[0]);
+        ini_set('session.gc_divisor', (string)$lottery[1]);
     }
     
     /**
@@ -114,8 +148,8 @@ class SessionManager
             $_SESSION[self::CREATED_TIME_KEY] = time();
             
             $this->logDebug('Session ID regenerated', [
-                'oldSessionId' => $oldSessionId,
-                'newSessionId' => session_id()
+                'oldSessionId' => substr($oldSessionId, 0, 8) . '...',
+                'newSessionId' => substr(session_id(), 0, 8) . '...'
             ]);
         }
     }
@@ -128,10 +162,10 @@ class SessionManager
         // Check session timeout
         if (isset($_SESSION[self::LAST_ACTIVITY_KEY])) {
             $elapsed = time() - $_SESSION[self::LAST_ACTIVITY_KEY];
-            if ($elapsed > self::SESSION_LIFETIME) {
+            if ($elapsed > $this->sessionLifetime) {
                 $this->logInfo('Session expired due to timeout', [
                     'elapsed' => $elapsed,
-                    'lifetime' => self::SESSION_LIFETIME,
+                    'lifetime' => $this->sessionLifetime,
                     'lastActivity' => date('Y-m-d H:i:s', $_SESSION[self::LAST_ACTIVITY_KEY])
                 ]);
                 $this->destroy();
@@ -146,37 +180,27 @@ class SessionManager
             
             if (!hash_equals($storedFingerprint, $currentFingerprint)) {
                 $this->logWarning('Session fingerprint mismatch', [
-                    'stored' => substr($storedFingerprint, 0, 8) . '...',
-                    'current' => substr($currentFingerprint, 0, 8) . '...',
-                    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+                    'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+                    'environment' => app_env()
                 ]);
                 
-                // In development, log more details
-                if ($_ENV['APP_DEBUG'] ?? false) {
-                    $this->logDebug('Fingerprint components', [
-                        'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-                        'acceptLanguage' => $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '',
-                        'acceptEncoding' => $_SERVER['HTTP_ACCEPT_ENCODING'] ?? ''
-                    ]);
+                // Only enforce in production
+                if (is_production() && !config('session.disable_fingerprint_check', false)) {
+                    $this->destroy();
+                    throw new \Exception('Session fingerprint mismatch');
                 }
-                
-                $this->destroy();
-                throw new \Exception('Session fingerprint mismatch');
             }
         } else {
             // First time - set fingerprint
             $_SESSION[self::FINGERPRINT_KEY] = $this->generateFingerprint();
             $_SESSION[self::CREATED_TIME_KEY] = time();
-            
-            $this->logDebug('Session fingerprint created', [
-                'fingerprint' => substr($_SESSION[self::FINGERPRINT_KEY], 0, 8) . '...'
-            ]);
         }
         
-        // Regenerate session ID periodically (every 30 minutes)
+        // Regenerate session ID periodically
+        $regenerateAfter = config('session.regenerate_after', 1800); // 30 minutes default
         if (isset($_SESSION[self::CREATED_TIME_KEY])) {
             $age = time() - $_SESSION[self::CREATED_TIME_KEY];
-            if ($age > 1800) {
+            if ($age > $regenerateAfter) {
                 $this->logDebug('Session ID regeneration due to age', ['age' => $age]);
                 $this->regenerate();
             }
@@ -185,31 +209,25 @@ class SessionManager
     
     /**
      * Generate session fingerprint
-     * Note: We're using a minimal fingerprint to avoid false positives
      */
     private function generateFingerprint(): string
     {
         // Get User-Agent and normalize it
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         
-        // Extract major browser version to handle auto-updates
-        $userAgent = $this->normalizeUserAgent($userAgent);
+        // Only use major browser version in production
+        if (is_production()) {
+            $userAgent = $this->normalizeUserAgent($userAgent);
+        }
         
         $fingerprint = [
             $userAgent,
-            // We can add more components if needed, but be careful
+            // Add more components if needed, but be careful
             // as too many components can cause false positives
         ];
         
         $fingerprintString = implode('|', $fingerprint);
-        $hash = hash('sha256', $fingerprintString);
-        
-        $this->logDebug('Fingerprint generated', [
-            'components' => count($fingerprint),
-            'hash' => substr($hash, 0, 8) . '...'
-        ]);
-        
-        return $hash;
+        return hash('sha256', $fingerprintString);
     }
     
     /**
@@ -231,6 +249,42 @@ class SessionManager
         // For other browsers, just use the full agent
         return $userAgent;
     }
+    
+    /**
+     * Check if connection is HTTPS
+     */
+    private function isHttps(): bool
+    {
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+            || $_SERVER['SERVER_PORT'] == 443
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+            || config('app.force_https', false);
+    }
+    
+    /**
+     * Get remaining session lifetime in seconds
+     */
+    public function getRemainingLifetime(): int
+    {
+        if (!isset($_SESSION[self::LAST_ACTIVITY_KEY])) {
+            return 0;
+        }
+        
+        $elapsed = time() - $_SESSION[self::LAST_ACTIVITY_KEY];
+        $remaining = $this->sessionLifetime - $elapsed;
+        
+        $this->logDebug('Calculating remaining lifetime', [
+            'lastActivity' => $_SESSION[self::LAST_ACTIVITY_KEY],
+            'currentTime' => time(),
+            'elapsed' => $elapsed,
+            'remaining' => $remaining,
+            'configuredLifetime' => $this->sessionLifetime
+        ]);
+        
+        return max(0, $remaining);
+    }
+    
+    // ... rest of the methods remain the same ...
     
     /**
      * Set secure session data
@@ -294,40 +348,11 @@ class SessionManager
             // Destroy session
             session_destroy();
             
-            $this->logInfo('Session destroyed', ['sessionId' => $sessionId]);
+            $this->logInfo('Session destroyed', [
+                'sessionId' => substr($sessionId, 0, 8) . '...',
+                'environment' => app_env()
+            ]);
         }
-    }
-    
-    /**
-     * Check if connection is HTTPS
-     */
-    private function isHttps(): bool
-    {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
-            || $_SERVER['SERVER_PORT'] == 443
-            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-    }
-    
-    /**
-     * Get remaining session lifetime in seconds
-     */
-    public function getRemainingLifetime(): int
-    {
-        if (!isset($_SESSION[self::LAST_ACTIVITY_KEY])) {
-            return 0;
-        }
-        
-        $elapsed = time() - $_SESSION[self::LAST_ACTIVITY_KEY];
-        $remaining = self::SESSION_LIFETIME - $elapsed;
-        
-        $this->logDebug('Calculating remaining lifetime', [
-            'lastActivity' => $_SESSION[self::LAST_ACTIVITY_KEY],
-            'currentTime' => time(),
-            'elapsed' => $elapsed,
-            'remaining' => $remaining
-        ]);
-        
-        return max(0, $remaining);
     }
     
     /**
@@ -341,7 +366,8 @@ class SessionManager
         $this->logInfo('Session activity extended', [
             'oldActivity' => $oldActivity ? date('Y-m-d H:i:s', $oldActivity) : 'null',
             'newActivity' => date('Y-m-d H:i:s', $_SESSION[self::LAST_ACTIVITY_KEY]),
-            'newLifetime' => $this->getRemainingLifetime()
+            'newLifetime' => $this->getRemainingLifetime(),
+            'environment' => app_env()
         ]);
     }
     

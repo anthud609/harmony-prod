@@ -1,4 +1,59 @@
+# Environment files
 .env
+.env.*
+!.env.example
+
+# Vendor directory
 /vendor/
+
+# Storage
+/storage/*
+!/storage/.gitkeep
+
+# Logs
+*.log
+/logs/
+
+# Cache
+/cache/
+*.cache
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Compiled files
+*.pyc
+*.pyo
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# Build artifacts
+/build/
+/dist/
+
+# Testing
+/coverage/
+.phpunit.result.cache
+
+# Node (if using any JS tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer
+composer.phar
 composer.lock
-/storage/
