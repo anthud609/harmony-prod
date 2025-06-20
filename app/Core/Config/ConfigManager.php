@@ -45,26 +45,28 @@ class ConfigManager
             $envFile = '.env.' . $appEnv;
         }
         
-        // Load the environment file
+        // Load the environment file if it exists
         if (file_exists($rootPath . '/' . $envFile)) {
-            $dotenv = Dotenv::createImmutable($rootPath, $envFile);
-            $dotenv->load();
-            
-            // Validate required variables
-            $dotenv->required([
-                'APP_NAME',
-                'APP_ENV',
-                'APP_KEY',
-                'DB_CONNECTION',
-                'DB_HOST',
-                'DB_DATABASE'
-            ]);
-            
-            // Validate boolean values
-            $dotenv->required('APP_DEBUG')->isBoolean();
-            
-            // Validate allowed values
-            $dotenv->required('APP_ENV')->allowedValues(['local', 'development', 'staging', 'production']);
+            try {
+                $dotenv = Dotenv::createImmutable($rootPath, $envFile);
+                $dotenv->load();
+                
+                // Validate required variables only if .env exists
+                $dotenv->required([
+                    'APP_NAME',
+                    'APP_ENV',
+                    'APP_KEY'
+                ]);
+                
+                // Validate boolean values
+                $dotenv->required('APP_DEBUG')->isBoolean();
+                
+                // Validate allowed values
+                $dotenv->required('APP_ENV')->allowedValues(['local', 'development', 'staging', 'production']);
+            } catch (\Exception $e) {
+                // Log the error but continue with defaults
+                error_log('Error loading .env file: ' . $e->getMessage());
+            }
         }
         
         $this->loaded = true;
@@ -87,8 +89,17 @@ class ConfigManager
         $configFiles = glob($configPath . '/*.php');
         foreach ($configFiles as $file) {
             $name = basename($file, '.php');
-            $this->config[$name] = require $file;
+            try {
+                $this->config[$name] = require $file;
+            } catch (\Exception $e) {
+                // If a config file fails, use defaults for that section
+                error_log("Failed to load config file {$file}: " . $e->getMessage());
+                $this->loadDefaultConfigurationForKey($name);
+            }
         }
+        
+        // Ensure all required configurations exist
+        $this->ensureRequiredConfigurations();
     }
     
     /**
@@ -107,6 +118,31 @@ class ConfigManager
             'search' => $this->getSearchConfig(),
             'features' => $this->getFeatureConfig(),
         ];
+    }
+    
+    /**
+     * Load default configuration for a specific key
+     */
+    private function loadDefaultConfigurationForKey(string $key): void
+    {
+        $method = 'get' . ucfirst($key) . 'Config';
+        if (method_exists($this, $method)) {
+            $this->config[$key] = $this->$method();
+        }
+    }
+    
+    /**
+     * Ensure all required configurations exist
+     */
+    private function ensureRequiredConfigurations(): void
+    {
+        $requiredConfigs = ['app', 'database', 'cache', 'session', 'logging', 'security'];
+        
+        foreach ($requiredConfigs as $key) {
+            if (!isset($this->config[$key])) {
+                $this->loadDefaultConfigurationForKey($key);
+            }
+        }
     }
     
     /**
@@ -216,6 +252,8 @@ class ConfigManager
             'locale' => $this->env('APP_LOCALE', 'en'),
             'key' => $this->env('APP_KEY', ''),
             'cipher' => 'AES-256-CBC',
+            'version' => '1.0.0',
+            'force_https' => $this->env('APP_FORCE_HTTPS', false),
         ];
     }
     
@@ -264,7 +302,7 @@ class ConfigManager
     {
         return [
             'driver' => $this->env('SESSION_DRIVER', 'file'),
-            'lifetime' => (int) $this->env('SESSION_LIFETIME', 360),
+            'lifetime' => (int) $this->env('SESSION_LIFETIME', 360), // 6 minutes default
             'warning_time' => (int) $this->env('SESSION_WARNING_TIME', 60),
             'expire_on_close' => false,
             'encrypt' => false,
@@ -279,6 +317,8 @@ class ConfigManager
             'secure' => $this->env('SESSION_COOKIE_SECURE', false),
             'http_only' => $this->env('SESSION_COOKIE_HTTPONLY', true),
             'same_site' => $this->env('SESSION_COOKIE_SAMESITE', 'lax'),
+            'regenerate_after' => (int) $this->env('SESSION_REGENERATE_AFTER', 1800), // 30 minutes
+            'disable_fingerprint_check' => $this->env('SESSION_DISABLE_FINGERPRINT_CHECK', false),
         ];
     }
     

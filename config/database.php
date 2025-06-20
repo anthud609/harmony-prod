@@ -1,109 +1,94 @@
 <?php
 // File: config/database.php
 
+use App\Core\Config\ConfigManager;
+
+$config = ConfigManager::getInstance();
+
 return [
+
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name
     |--------------------------------------------------------------------------
+    |
+    | Here you may specify which of the database connections below you wish
+    | to use as your default connection for all database work. Of course
+    | you may use many connections at once using the Database library.
+    |
     */
-    'default' => env('DB_CONNECTION', 'mysql'),
+
+    'default' => $config->env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
+    |
+    | Here are each of the database connections setup for your application.
+    | Of course, examples of configuring each database platform that is
+    | supported by Laravel is shown below to make development simple.
+    |
     */
+
     'connections' => [
+
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'url' => $config->env('DATABASE_URL'),
+            'database' => $config->env('DB_DATABASE', dirname(__DIR__).'/database/database.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => $config->env('DB_FOREIGN_KEYS', true),
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => env('DB_PREFIX', ''),
+            'url' => $config->env('DATABASE_URL'),
+            'host' => $config->env('DB_HOST', '127.0.0.1'),
+            'port' => $config->env('DB_PORT', '3306'),
+            'database' => $config->env('DB_DATABASE', 'forge'),
+            'username' => $config->env('DB_USERNAME', 'forge'),
+            'password' => $config->env('DB_PASSWORD', ''),
+            'unix_socket' => $config->env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_SSL_CA => $config->env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'url' => $config->env('DATABASE_URL'),
+            'host' => $config->env('DB_HOST', '127.0.0.1'),
+            'port' => $config->env('DB_PORT', '5432'),
+            'database' => $config->env('DB_DATABASE', 'forge'),
+            'username' => $config->env('DB_USERNAME', 'forge'),
+            'password' => $config->env('DB_PASSWORD', ''),
             'charset' => 'utf8',
-            'prefix' => env('DB_PREFIX', ''),
+            'prefix' => '',
             'prefix_indexes' => true,
             'schema' => 'public',
             'sslmode' => 'prefer',
         ],
 
-        'sqlite' => [
-            'driver' => 'sqlite',
-            'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix' => env('DB_PREFIX', ''),
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-        ],
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Migration Repository Table
     |--------------------------------------------------------------------------
+    |
+    | This table keeps track of all the migrations that have already run for
+    | your application. Using this information, we can determine which of
+    | the migrations on disk haven't actually been run in the database.
+    |
     */
+
     'migrations' => 'migrations',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Redis Databases
-    |--------------------------------------------------------------------------
-    */
-    'redis' => [
-        'client' => env('REDIS_CLIENT', 'phpredis'),
-
-        'options' => [
-            'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', 'harmony_database_'),
-        ],
-
-        'default' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_DB', '0'),
-        ],
-
-        'cache' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_CACHE_DB', '1'),
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Database Query Logging
-    |--------------------------------------------------------------------------
-    */
-    'logging' => [
-        'enabled' => env('DB_LOGGING_ENABLED', env('APP_DEBUG', false)),
-        'threshold' => env('DB_SLOW_QUERY_THRESHOLD', 1000), // milliseconds
-        'log_all' => env('DB_LOG_ALL_QUERIES', false),
-    ],
 ];
