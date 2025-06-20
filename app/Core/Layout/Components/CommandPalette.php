@@ -1,4 +1,5 @@
 <?php
+
 // File: app/Core/Layout/Components/CommandPalette.php
 
 namespace App\Core\Layout\Components;
@@ -76,7 +77,7 @@ class CommandPalette
         <!-- Quick Actions -->
         <div class="p-2">
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Actions</p>
-            <?php foreach ($this->getQuickActions() as $action): ?>
+            <?php foreach ($this->getQuickActions() as $action) : ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
                     data-action="<?= $action['action'] ?>">
                 <div class="w-10 h-10 bg-<?= $action['color'] ?>-100 dark:bg-<?= $action['color'] ?>-900 rounded-lg flex items-center justify-center mr-3">
@@ -86,7 +87,7 @@ class CommandPalette
                     <p class="text-sm font-medium text-gray-900 dark:text-white"><?= $action['title'] ?></p>
                     <p class="text-xs text-gray-500 dark:text-gray-400"><?= $action['description'] ?></p>
                 </div>
-                <?php if (isset($action['shortcut'])): ?>
+                <?php if (isset($action['shortcut'])) : ?>
                 <kbd class="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded"><?= $action['shortcut'] ?></kbd>
                 <?php endif; ?>
             </button>
@@ -96,7 +97,7 @@ class CommandPalette
         <!-- Recent Searches -->
         <div class="p-2 border-t border-gray-200 dark:border-gray-700">
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent</p>
-            <?php foreach ($this->getRecentSearches($data) as $search): ?>
+            <?php foreach ($this->getRecentSearches($data) as $search) : ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
                     data-search="<?= htmlspecialchars($search['query']) ?>">
                 <i class="fas fa-clock text-gray-400 dark:text-gray-500 mr-3"></i>

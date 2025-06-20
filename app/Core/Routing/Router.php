@@ -57,8 +57,10 @@ class Router
         $reflection = new \ReflectionMethod($controller, $actionMethod);
         $parameters = $reflection->getParameters();
 
-        if (! empty($parameters) && $parameters[0]->getType() &&
-            $parameters[0]->getType()->getName() === Request::class) {
+        if (
+            ! empty($parameters) && $parameters[0]->getType() &&
+            $parameters[0]->getType()->getName() === Request::class
+        ) {
             // New clean controllers that accept Request and return Response
             return $controller->{$actionMethod}($request);
         } else {

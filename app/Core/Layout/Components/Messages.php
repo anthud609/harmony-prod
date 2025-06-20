@@ -1,4 +1,5 @@
 <?php
+
 // File: app/Core/Layout/Components/Messages.php
 
 namespace App\Core\Layout\Components;
@@ -19,7 +20,7 @@ class Messages
         <div class="relative">
             <button id="messagesBtn" onclick="Messages.toggle()" class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <i class="fas fa-comment-dots text-gray-700 dark:text-gray-300"></i>
-                <?php if ($unreadCount > 0): ?>
+                <?php if ($unreadCount > 0) : ?>
                 <span id="messageBadge" class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-indigo-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
                     <?= $unreadCount ?>
                 </span>
@@ -35,8 +36,8 @@ class Messages
                     </div>
                 </div>
                 <div class="max-h-96 overflow-y-auto">
-                    <?php foreach ($messages as $message): ?>
-                    <?php $this->renderMessageItem($message); ?>
+                    <?php foreach ($messages as $message) : ?>
+                        <?php $this->renderMessageItem($message); ?>
                     <?php endforeach; ?>
                 </div>
             </div>

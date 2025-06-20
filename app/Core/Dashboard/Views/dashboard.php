@@ -66,7 +66,7 @@
         </div>
         <div class="p-6">
             <div class="space-y-4">
-                <?php foreach ($recentActivities as $activity): ?>
+                <?php foreach ($recentActivities as $activity) : ?>
                 <div class="flex items-start space-x-3">
                     <div class="w-8 h-8 bg-<?= ecss($activity['color']) ?>-100 dark:bg-<?= ecss($activity['color']) ?>-900 rounded-full flex items-center justify-center flex-shrink-0">
                         <i class="<?= attr($activity['icon']) ?> text-<?= ecss($activity['color']) ?>-600 dark:text-<?= ecss($activity['color']) ?>-400 text-xs"></i>

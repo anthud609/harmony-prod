@@ -65,7 +65,7 @@
             <!-- Main login card -->
             <div class="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 animate-slide-up">
                 <!-- Show PHP error message if exists -->
-                <?php if (isset($_SESSION['flash_error'])): ?>
+                <?php if (isset($_SESSION['flash_error'])) : ?>
                 <div class="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm animate-shake">
                     <div class="flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@
                         <span><?= htmlspecialchars($_SESSION['flash_error']) ?></span>
                     </div>
                 </div>
-                <?php unset($_SESSION['flash_error']); ?>
+                    <?php unset($_SESSION['flash_error']); ?>
                 <?php endif; ?>
 
                 <!-- Auth method toggle -->

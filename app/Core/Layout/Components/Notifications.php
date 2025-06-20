@@ -1,4 +1,5 @@
 <?php
+
 // File: app/Core/Layout/Components/Notifications.php
 
 namespace App\Core\Layout\Components;
@@ -19,7 +20,7 @@ class Notifications
         <div class="relative">
             <button id="notificationBtn" onclick="Notifications.toggle()" class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <i class="fas fa-bell text-gray-700 dark:text-gray-300"></i>
-                <?php if ($unreadCount > 0): ?>
+                <?php if ($unreadCount > 0) : ?>
                 <span id="notificationBadge" class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
                     <?= $unreadCount > 99 ? '99+' : $unreadCount ?>
                 </span>
@@ -35,8 +36,8 @@ class Notifications
                     </div>
                 </div>
                 <div class="max-h-96 overflow-y-auto">
-                    <?php foreach ($notifications as $notification): ?>
-                    <?php $this->renderNotificationItem($notification); ?>
+                    <?php foreach ($notifications as $notification) : ?>
+                        <?php $this->renderNotificationItem($notification); ?>
                     <?php endforeach; ?>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 <?php
+
 // File: app/Core/Layout/Components/PageHeader.php
 
 namespace App\Core\Layout\Components;
@@ -20,11 +21,11 @@ class PageHeader
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                 <!-- Breadcrumbs -->
-                <?php if (! empty($breadcrumbs)): ?>
+                <?php if (! empty($breadcrumbs)) : ?>
                 <nav class="mb-3" aria-label="Breadcrumb">
                     <ol class="flex items-center space-x-2 text-sm">
-                        <?php foreach ($breadcrumbs as $index => $crumb): ?>
-                            <?php if ($index > 0): ?>
+                        <?php foreach ($breadcrumbs as $index => $crumb) : ?>
+                            <?php if ($index > 0) : ?>
                                 <li class="flex items-center">
                                     <svg class="flex-shrink-0 w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
@@ -32,12 +33,12 @@ class PageHeader
                                 </li>
                             <?php endif; ?>
                             <li>
-                                <?php if (isset($crumb['url']) && $index < count($breadcrumbs) - 1): ?>
+                                <?php if (isset($crumb['url']) && $index < count($breadcrumbs) - 1) : ?>
                                     <a href="<?= htmlspecialchars($crumb['url']) ?>" 
                                        class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                                         <?= htmlspecialchars($crumb['label']) ?>
                                     </a>
-                                <?php else: ?>
+                                <?php else : ?>
                                     <span class="text-gray-700 dark:text-gray-300 font-medium">
                                         <?= htmlspecialchars($crumb['label']) ?>
                                     </span>
@@ -79,7 +80,7 @@ class PageHeader
                             </button>
                             
                             <!-- Help Icon -->
-                            <?php if ($helpLink !== '#'): ?>
+                            <?php if ($helpLink !== '#') : ?>
                             <a href="<?= htmlspecialchars($helpLink) ?>"
                                target="_blank"
                                class="group relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -96,7 +97,7 @@ class PageHeader
                             <?php endif; ?>
                         </div>
                         
-                        <?php if ($description): ?>
+                        <?php if ($description) : ?>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                             <?= htmlspecialchars($description) ?>
                         </p>
@@ -104,15 +105,15 @@ class PageHeader
                     </div>
                     
                     <!-- Action Buttons -->
-                    <?php if (! empty($actions)): ?>
+                    <?php if (! empty($actions)) : ?>
                     <div class="mt-4 sm:mt-0 sm:ml-6 flex flex-wrap gap-2">
-                        <?php foreach ($actions as $action): ?>
-                            <?php if (isset($action['type']) && $action['type'] === 'dropdown'): ?>
+                        <?php foreach ($actions as $action) : ?>
+                            <?php if (isset($action['type']) && $action['type'] === 'dropdown') : ?>
                                 <!-- Dropdown Action -->
                                 <div class="relative">
                                     <button onclick="PageHeader.toggleDropdown('<?= $action['id'] ?>')"
                                             class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg <?= $action['variant'] === 'primary' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' ?> transition-colors">
-                                        <?php if (isset($action['icon'])): ?>
+                                        <?php if (isset($action['icon'])) : ?>
                                         <i class="<?= $action['icon'] ?> mr-2 -ml-1 w-4 h-4"></i>
                                         <?php endif; ?>
                                         <?= htmlspecialchars($action['label']) ?>
@@ -123,14 +124,14 @@ class PageHeader
                                     
                                     <!-- Dropdown Menu -->
                                     <div id="<?= $action['id'] ?>" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hidden z-10">
-                                        <?php foreach ($action['items'] as $item): ?>
-                                            <?php if ($item === 'divider'): ?>
+                                        <?php foreach ($action['items'] as $item) : ?>
+                                            <?php if ($item === 'divider') : ?>
                                                 <div class="border-t border-gray-200 dark:border-gray-700"></div>
-                                            <?php else: ?>
+                                            <?php else : ?>
                                                 <a href="<?= htmlspecialchars($item['url'] ?? '#') ?>"
                                                    onclick="<?= $item['onclick'] ?? '' ?>"
                                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors <?= isset($item['danger']) && $item['danger'] ? 'text-red-600 dark:text-red-400' : '' ?>">
-                                                    <?php if (isset($item['icon'])): ?>
+                                                    <?php if (isset($item['icon'])) : ?>
                                                     <i class="<?= $item['icon'] ?> mr-3 w-4 h-4"></i>
                                                     <?php endif; ?>
                                                     <?= htmlspecialchars($item['label']) ?>
@@ -139,12 +140,12 @@ class PageHeader
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-                            <?php else: ?>
+                            <?php else : ?>
                                 <!-- Regular Button -->
                                 <a href="<?= htmlspecialchars($action['url'] ?? '#') ?>"
                                    onclick="<?= $action['onclick'] ?? '' ?>"
                                    class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg <?= $action['variant'] === 'primary' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' ?> transition-colors">
-                                    <?php if (isset($action['icon'])): ?>
+                                    <?php if (isset($action['icon'])) : ?>
                                     <i class="<?= $action['icon'] ?> mr-2 -ml-1 w-4 h-4"></i>
                                     <?php endif; ?>
                                     <?= htmlspecialchars($action['label']) ?>

@@ -45,7 +45,7 @@
     <script>tailwind.config = { darkMode: 'class' }</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <?php if (isset($additionalStyles)): ?>
+    <?php if (isset($additionalStyles)) : ?>
         <?= $additionalStyles ?>
     <?php endif; ?>
 
@@ -67,7 +67,7 @@
     <!-- Main content -->
     <main id="mainContent" class="pt-16 lg:pl-64 transition-all duration-300">
         <!-- Page Header Component -->
-        <?php if (! empty($breadcrumbs) || ! empty($pageTitle) || ! empty($pageActions)): ?>
+        <?php if (! empty($breadcrumbs) || ! empty($pageTitle) || ! empty($pageActions)) : ?>
             <?php $this->component('pageHeader'); ?>
         <?php endif; ?>
         
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
      </script>
     
-    <?php if (isset($additionalScripts)): ?>
+    <?php if (isset($additionalScripts)) : ?>
         <?= $additionalScripts ?>
     <?php endif; ?>
 </body>

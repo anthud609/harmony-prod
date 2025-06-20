@@ -96,8 +96,10 @@ class CsrfProtection
 
         // Check against all valid tokens
         foreach ($_SESSION['csrf_tokens'] ?? [] as $storedToken) {
-            if ($this->isTokenValid($storedToken) &&
-                hash_equals($storedToken['token'], $token)) {
+            if (
+                $this->isTokenValid($storedToken) &&
+                hash_equals($storedToken['token'], $token)
+            ) {
                 return true;
             }
         }

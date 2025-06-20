@@ -9,8 +9,10 @@ $finder = PhpCsFixer\Finder::create()
     ->name('*.php')
     ->notName('*.blade.php')
     ->ignoreDotFiles(true)
-    ->ignoreVCS(true);
-
+    ->ignoreVCS(true)
+    // Add this line to exclude view files with mixed PHP/HTML
+    ->notPath('*/Views/*')
+    ->notPath('*/Components/*');
 return (new PhpCsFixer\Config())
     ->setRules([
         '@PSR12' => true,

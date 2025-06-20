@@ -1,4 +1,5 @@
 <?php
+
 // File: app/Core/Layout/Components/Header.php
 
 namespace App\Core\Layout\Components;
