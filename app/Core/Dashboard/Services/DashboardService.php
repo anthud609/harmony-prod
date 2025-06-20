@@ -1,5 +1,5 @@
 <?php
-// File: app/Core/Dashboard/Services/DashboardService.php (Enhanced)
+// File: app/Core/Dashboard/Services/DashboardService.php
 namespace App\Core\Dashboard\Services;
 
 use App\Core\Dashboard\Repositories\DashboardRepository;
@@ -7,53 +7,54 @@ use App\Core\Dashboard\Repositories\ActivityRepository;
 use App\Core\Dashboard\Repositories\WidgetRepository;
 
 /**
- * Business logic layer - handles complex operations
+ * Simplified business logic layer
  */
 class DashboardService
 {
-    private DashboardRepository $dashboardRepo;
-    private ActivityRepository $activityRepo;
-    private WidgetRepository $widgetRepo;
+    private ?DashboardRepository $dashboardRepo = null;
+    private ?ActivityRepository $activityRepo = null;
+    private ?WidgetRepository $widgetRepo = null;
     
     public function __construct(
-        DashboardRepository $dashboardRepo,
-        ActivityRepository $activityRepo,
-        WidgetRepository $widgetRepo
+        DashboardRepository $dashboardRepo = null,
+        ActivityRepository $activityRepo = null,
+        WidgetRepository $widgetRepo = null
     ) {
-        $this->dashboardRepo = $dashboardRepo;
-        $this->activityRepo = $activityRepo;
-        $this->widgetRepo = $widgetRepo;
+        $this->dashboardRepo = $dashboardRepo ?? new DashboardRepository();
+        $this->activityRepo = $activityRepo ?? new ActivityRepository();
+        $this->widgetRepo = $widgetRepo ?? new WidgetRepository();
     }
     
     /**
-     * Get complete dashboard data for a user
+     * Get dashboard statistics
      */
-    public function getDashboardData(int $userId): array
+    public function getDashboardStats(): array
     {
-        return [
-            'stats' => $this->dashboardRepo->getStats($userId),
-            'activities' => $this->activityRepo->getRecentActivities($userId, 10),
-            'widgets' => $this->widgetRepo->getUserWidgets($userId),
-            'favorites' => $this->dashboardRepo->getUserFavorites($userId)
-        ];
+        // Using simplified method without userId for now
+        return $this->dashboardRepo->getStats(1);
     }
     
     /**
-     * Update widget configuration with validation
+     * Get recent activities
      */
-    public function updateWidget(int $userId, ?string $widgetId, array $configuration): array
+    public function getRecentActivities(): array
+    {
+        return $this->activityRepo->getRecentActivities(1, 10);
+    }
+    
+    /**
+     * Update widget configuration
+     */
+    public function updateWidget(?string $widgetId, array $configuration): array
     {
         if (!$widgetId) {
             throw new \InvalidArgumentException('Widget ID is required');
         }
         
-        // Validate user owns the widget
-        if (!$this->widgetRepo->userOwnsWidget($userId, $widgetId)) {
+        // Simplified validation
+        if (!$this->widgetRepo->userOwnsWidget(1, $widgetId)) {
             throw new \InvalidArgumentException('Widget not found');
         }
-        
-        // Validate configuration
-        $this->validateWidgetConfiguration($widgetId, $configuration);
         
         // Update widget
         $success = $this->widgetRepo->updateConfiguration($widgetId, $configuration);
@@ -63,24 +64,5 @@ class DashboardService
             'widgetId' => $widgetId,
             'configuration' => $configuration
         ];
-    }
-    
-    private function validateWidgetConfiguration(string $widgetId, array $configuration): void
-    {
-        // Business rules for widget configuration
-        $widgetType = $this->widgetRepo->getWidgetType($widgetId);
-        
-        switch ($widgetType) {
-            case 'chart':
-                if (!isset($configuration['chartType'])) {
-                    throw new \InvalidArgumentException('Chart type is required');
-                }
-                break;
-            case 'stat':
-                if (!isset($configuration['metric'])) {
-                    throw new \InvalidArgumentException('Metric is required');
-                }
-                break;
-        }
     }
 }

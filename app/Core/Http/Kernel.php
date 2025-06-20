@@ -1,11 +1,10 @@
 <?php
 
-
-
 // File: app/Core/Http/Kernel.php
 namespace App\Core\Http;
 
 use App\Core\Http\Middleware\MiddlewareInterface;
+use App\Core\Routing\Router;
 
 /**
  * HTTP Kernel - handles request/response cycle with middleware

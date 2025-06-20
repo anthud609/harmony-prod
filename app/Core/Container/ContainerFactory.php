@@ -9,6 +9,7 @@ use App\Core\Container\Providers\LayoutServiceProvider;
 use App\Core\Container\Providers\ControllerServiceProvider;
 use App\Core\Container\Providers\ApiServiceProvider;
 use App\Core\Container\Providers\LoggingServiceProvider;
+use App\Core\Container\Providers\RoutingServiceProvider;
 
 class ContainerFactory
 {
@@ -38,6 +39,7 @@ class ContainerFactory
             new LayoutServiceProvider(),
             new ControllerServiceProvider(),
             new ApiServiceProvider(),
+            new RoutingServiceProvider(), // Add routing provider
         ];
         
         foreach ($providers as $provider) {
