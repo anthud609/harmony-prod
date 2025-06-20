@@ -1,4 +1,5 @@
 <?php
+// File: app/Core/Layout/LayoutManager.php (Updated)
 namespace App\Core\Layout;
 
 use App\Core\Layout\Components\Header;
@@ -9,6 +10,7 @@ use App\Core\Layout\Components\Messages;
 use App\Core\Layout\Components\Notifications;
 use App\Core\Layout\Components\CommandPalette;
 use App\Core\Layout\Components\GlobalScripts;
+use App\Core\Layout\Components\PageHeader;
 
 class LayoutManager
 {
@@ -20,7 +22,11 @@ class LayoutManager
         // Set default data
         $this->data = [
             'title' => 'Harmony HRMS',
-            'user' => $_SESSION['user'] ?? null
+            'user' => $_SESSION['user'] ?? null,
+            'breadcrumbs' => [],
+            'pageActions' => [],
+            'pageDescription' => '',
+            'helpLink' => '#'
         ];
     }
     
@@ -33,6 +39,30 @@ class LayoutManager
     public function with(array $data): self
     {
         $this->data = array_merge($this->data, $data);
+        return $this;
+    }
+    
+    public function setBreadcrumbs(array $breadcrumbs): self
+    {
+        $this->data['breadcrumbs'] = $breadcrumbs;
+        return $this;
+    }
+    
+    public function setPageActions(array $actions): self
+    {
+        $this->data['pageActions'] = $actions;
+        return $this;
+    }
+    
+    public function setPageDescription(string $description): self
+    {
+        $this->data['pageDescription'] = $description;
+        return $this;
+    }
+    
+    public function setHelpLink(string $link): self
+    {
+        $this->data['helpLink'] = $link;
         return $this;
     }
     
@@ -64,7 +94,8 @@ class LayoutManager
             'messages' => [Messages::class, 'renderDropdown'],
             'notifications' => [Notifications::class, 'renderDropdown'],
             'commandPalette' => [CommandPalette::class, 'render'],
-            'globalScripts' => [GlobalScripts::class, 'render']
+            'globalScripts' => [GlobalScripts::class, 'render'],
+            'pageHeader' => [PageHeader::class, 'render']
         ];
         
         if (isset($componentMap[$component])) {

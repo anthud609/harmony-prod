@@ -1,3 +1,5 @@
+// File: app/Core/Layout/Layouts/MainLayout.php (Updated)
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,8 +62,16 @@
     <?php $this->component('sidebar'); ?>
 
     <!-- Main content -->
-    <main id="mainContent" class="pt-16 lg:pl-64 transition-all duration-300">
-        <?= $content ?>
+    <main id="mainContent" class=" lg:pl-64 transition-all duration-300">
+        <!-- Page Header Component -->
+        <?php if (!empty($breadcrumbs) || !empty($pageTitle) || !empty($pageActions)): ?>
+            <?php $this->component('pageHeader'); ?>
+        <?php endif; ?>
+        
+        <!-- Page Content -->
+        <div class="<?= (!empty($breadcrumbs) || !empty($pageTitle) || !empty($pageActions)) ? '' : 'pt-6' ?>">
+            <?= $content ?>
+        </div>
     </main>
 
     <!-- Scripts Component -->

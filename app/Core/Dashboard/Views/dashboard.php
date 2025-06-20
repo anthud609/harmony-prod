@@ -1,14 +1,5 @@
+<!-- File: app/Core/Dashboard/Views/dashboard.php (Updated) -->
 <div class="p-6 max-w-7xl mx-auto">
-    <!-- Page header -->
-    <div class="mb-8">
-        <h1 id="welcomeMessage" class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            Welcome back, <?= htmlspecialchars($user['firstName'] ?? 'Guest') ?>! 👋
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">
-            Here's what's happening with your team today.
-        </p>
-    </div>
-
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Employees -->
@@ -39,7 +30,33 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">Present Today</p>
         </div>
 
-        <!-- Continue with other stats... -->
+        <!-- On Leave -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-times text-orange-600 dark:text-orange-400"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                    5% of workforce
+                </span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['onLeave'] ?></h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">On Leave</p>
+        </div>
+
+        <!-- New Applications -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900 px-2 py-1 rounded">
+                    Urgent
+                </span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['newApplications'] ?></h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">New Applications</p>
+        </div>
     </div>
 
     <!-- Quick Actions -->
@@ -50,7 +67,18 @@
                 <i class="fas fa-user-plus text-2xl text-indigo-600 dark:text-indigo-400 mb-2"></i>
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Add Employee</p>
             </button>
-            <!-- Continue with other actions... -->
+            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-green-500 dark:hover:border-green-400">
+                <i class="fas fa-calendar-plus text-2xl text-green-600 dark:text-green-400 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Request Leave</p>
+            </button>
+            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-blue-500 dark:hover:border-blue-400">
+                <i class="fas fa-clock text-2xl text-blue-600 dark:text-blue-400 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Mark Attendance</p>
+            </button>
+            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-purple-500 dark:hover:border-purple-400">
+                <i class="fas fa-chart-line text-2xl text-purple-600 dark:text-purple-400 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">View Reports</p>
+            </button>
         </div>
     </div>
 
@@ -78,3 +106,28 @@
         </div>
     </div>
 </div>
+
+<!-- Add JavaScript for dashboard actions -->
+<script>
+function exportDashboard() {
+    // Implement export functionality
+    alert('Export functionality would be implemented here');
+}
+
+function refreshDashboard() {
+    // Implement refresh functionality
+    location.reload();
+}
+
+function resetDashboard() {
+    if (confirm('Are you sure you want to reset the dashboard to default settings?')) {
+        // Implement reset functionality
+        alert('Dashboard reset functionality would be implemented here');
+    }
+}
+
+function openAddWidgetModal() {
+    // Implement add widget modal
+    alert('Add widget modal would be implemented here');
+}
+</script>
