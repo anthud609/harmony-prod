@@ -1,6 +1,15 @@
 <?php
 namespace App\Core\Layout;
 
+use App\Core\Layout\Components\Header;
+use App\Core\Layout\Components\Sidebar;
+use App\Core\Layout\Components\Scripts;
+use App\Core\Layout\Components\UserMenu;
+use App\Core\Layout\Components\Messages;
+use App\Core\Layout\Components\Notifications;
+use App\Core\Layout\Components\CommandPalette;
+use App\Core\Layout\Components\GlobalScripts;
+
 class LayoutManager
 {
     protected array $data = [];
@@ -45,9 +54,31 @@ class LayoutManager
     public function component(string $component, array $componentData = []): void
     {
         $data = array_merge($this->data, $componentData);
-        extract($data);
         
-        $componentFile = __DIR__ . "/Components/" . ucfirst($component) . ".php";
-        require $componentFile;
+        // Map component names to their class methods
+        $componentMap = [
+            'header' => [Header::class, 'render'],
+            'sidebar' => [Sidebar::class, 'render'],
+            'scripts' => [Scripts::class, 'render'],
+            'userMenu' => [UserMenu::class, 'render'],
+            'messages' => [Messages::class, 'renderDropdown'],
+            'notifications' => [Notifications::class, 'renderDropdown'],
+            'commandPalette' => [CommandPalette::class, 'render'],
+            'globalScripts' => [GlobalScripts::class, 'render']
+        ];
+        
+        if (isset($componentMap[$component])) {
+            [$class, $method] = $componentMap[$component];
+            $class::$method($data);
+        } else {
+            // Fallback to old file-based approach if component not in map
+            $componentFile = __DIR__ . "/Components/" . ucfirst($component) . ".php";
+            if (file_exists($componentFile)) {
+                extract($data);
+                require $componentFile;
+            } else {
+                throw new \Exception("Component '{$component}' not found");
+            }
+        }
     }
 }

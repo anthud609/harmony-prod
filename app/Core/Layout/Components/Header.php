@@ -1,13 +1,8 @@
 <?php
 
 
-
-// File: app/Core/Layout/Components/Header.php (Updated)
+// File: app/Core/Layout/Components/Header.php (Fixed)
 namespace App\Core\Layout\Components;
-
-use App\Core\Layout\Components\Messages;
-use App\Core\Layout\Components\Notifications;
-use App\Core\Layout\Components\UserMenu;
 
 class Header
 {
