@@ -1,6 +1,8 @@
 <?php
 namespace App\Modules\IAM\Controllers;
 
+use App\Core\Security\SessionManager;
+
 class AuthController
 {
     public function showLogin(): void
@@ -46,7 +48,11 @@ class AuthController
         $password = $_POST['password'] ?? '';
 
         if (isset($users[$username]) && $users[$username]['password'] === $password) {
-            $_SESSION['user'] = [
+            // CRITICAL: Regenerate session ID to prevent session fixation
+            SessionManager::regenerate(true);
+            
+            // Set user data in session
+            SessionManager::set('user', [
                 'id'                => array_search($username, array_keys($users)) + 1,
                 'username'          => $username,
                 'role'              => $users[$username]['role'],
@@ -54,25 +60,55 @@ class AuthController
                 'lastName'          => $users[$username]['lastName'],
                 'jobTitle'          => $users[$username]['jobTitle'],
                 'preferredTheme'    => $users[$username]['preferredTheme'],
-                'notificationCount' => $users[$username]['notificationCount']
-            ];
+                'notificationCount' => $users[$username]['notificationCount'],
+                'loginTime'         => time(),
+                'lastActivity'      => time()
+            ]);
             
             // Set theme preference in session for immediate use
-            $_SESSION['theme'] = $users[$username]['preferredTheme'];
+            SessionManager::set('theme', $users[$username]['preferredTheme']);
+            
+            // Log successful login (in production, log to file/database)
+            error_log(sprintf(
+                'Successful login: User %s from IP %s',
+                $username,
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ));
             
             header('Location: /dashboard');
             exit;
         }
 
+        // Log failed login attempt
+        error_log(sprintf(
+            'Failed login attempt: Username %s from IP %s',
+            $username,
+            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ));
+
         // on failure, back to login with an error
-        $_SESSION['flash_error'] = 'Invalid credentials.';
+        SessionManager::set('flash_error', 'Invalid credentials.');
         header('Location: /login');
         exit;
     }
 
     public function logout(): void
     {
-        session_destroy();
+        // Get user info before destroying session
+        $user = SessionManager::get('user');
+        
+        if ($user) {
+            // Log logout
+            error_log(sprintf(
+                'User logout: %s from IP %s',
+                $user['username'] ?? 'unknown',
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ));
+        }
+        
+        // Securely destroy session
+        SessionManager::destroy();
+        
         header('Location: /login');
         exit;
     }
@@ -82,7 +118,7 @@ class AuthController
      */
     public function updatePreferences(): void
     {
-        if (!isset($_SESSION['user'])) {
+        if (!SessionManager::has('user')) {
             header('Location: /login');
             exit;
         }
@@ -91,11 +127,13 @@ class AuthController
         
         // Validate theme value
         if (in_array($theme, ['light', 'dark', 'system'])) {
-            $_SESSION['user']['preferredTheme'] = $theme;
-            $_SESSION['theme'] = $theme;
+            $user = SessionManager::get('user');
+            $user['preferredTheme'] = $theme;
+            SessionManager::set('user', $user);
+            SessionManager::set('theme', $theme);
             
             // In a real application, you would save this to database
-            // $this->userRepository->updateTheme($_SESSION['user']['id'], $theme);
+            // $this->userRepository->updateTheme($user['id'], $theme);
         }
         
         // Return JSON response for AJAX requests
@@ -116,16 +154,18 @@ class AuthController
      */
     public function markNotificationsRead(): void
     {
-        if (!isset($_SESSION['user'])) {
+        if (!SessionManager::has('user')) {
             header('Location: /login');
             exit;
         }
         
         // Reset notification count
-        $_SESSION['user']['notificationCount'] = 0;
+        $user = SessionManager::get('user');
+        $user['notificationCount'] = 0;
+        SessionManager::set('user', $user);
         
         // In a real application, you would update this in database
-        // $this->notificationRepository->markAllRead($_SESSION['user']['id']);
+        // $this->notificationRepository->markAllRead($user['id']);
         
         // Return JSON response
         header('Content-Type: application/json');

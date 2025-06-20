@@ -1,5 +1,5 @@
 <?php
-// File: app/Core/Layout/LayoutManager.php (Updated)
+// File: app/Core/Layout/LayoutManager.php
 namespace App\Core\Layout;
 
 use App\Core\Layout\Components\Header;
@@ -11,6 +11,7 @@ use App\Core\Layout\Components\Notifications;
 use App\Core\Layout\Components\CommandPalette;
 use App\Core\Layout\Components\GlobalScripts;
 use App\Core\Layout\Components\PageHeader;
+use App\Core\Security\SessionManager;
 
 class LayoutManager
 {
@@ -19,10 +20,10 @@ class LayoutManager
     
     public function __construct()
     {
-        // Set default data
+        // Set default data using SessionManager
         $this->data = [
             'title' => 'Harmony HRMS',
-            'user' => $_SESSION['user'] ?? null,
+            'user' => SessionManager::getUser(),
             'breadcrumbs' => [],
             'pageActions' => [],
             'pageDescription' => '',

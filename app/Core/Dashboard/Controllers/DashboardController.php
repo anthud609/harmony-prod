@@ -1,9 +1,9 @@
 <?php
-// File: app/Core/Dashboard/Controllers/DashboardController.php (Updated Example)
-// File: app/Core/Dashboard/Controllers/DashboardController.php (Updated Example)
+// File: app/Core/Dashboard/Controllers/DashboardController.php
 namespace App\Core\Dashboard\Controllers;
 
 use App\Core\Layout\LayoutManager;
+use App\Core\Security\SessionManager;
 
 class DashboardController
 {
@@ -16,11 +16,14 @@ class DashboardController
     
     public function index(): void
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user'])) {
+        // Check if user is logged in using SessionManager
+        if (!SessionManager::isLoggedIn()) {
             header('Location: /login');
             exit;
         }
+        
+        // Get user from session
+        $user = SessionManager::getUser();
         
         // Prepare data for the view
         $data = [
@@ -31,7 +34,7 @@ class DashboardController
             'recentActivities' => $this->getRecentActivities(),
             'helpLink' => 'https://docs.harmonyhrms.com/dashboard',
             'pageId' => 'dashboard-home',
-            'isFavorite' => in_array('dashboard-home', $_SESSION['user']['favorites'] ?? [])
+            'isFavorite' => in_array('dashboard-home', $user['favorites'] ?? [])
         ];
         
         // Set breadcrumbs
@@ -129,15 +132,23 @@ class DashboardController
     }
 
     public function updateWidget(): void
-{
-    // CSRF is automatically verified by middleware for POST requests
-    
-    $widgetId = $_POST['widget_id'] ?? null;
-    $configuration = $_POST['configuration'] ?? [];
-    
-    // Process the update...
-    
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true]);
-}
+    {
+        // Check authentication
+        if (!SessionManager::isLoggedIn()) {
+            header('HTTP/1.1 401 Unauthorized');
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+        
+        // CSRF is automatically verified by middleware for POST requests
+        
+        $widgetId = $_POST['widget_id'] ?? null;
+        $configuration = $_POST['configuration'] ?? [];
+        
+        // Process the update...
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+    }
 }

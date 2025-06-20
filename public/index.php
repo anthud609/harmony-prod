@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../app/Core/Helpers/csrf.php';
+
 // Show all errors, warnings, notices, deprecated messages, etc.
 error_reporting(E_ALL);
 
@@ -9,12 +10,21 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
-session_start();
-
 use App\Modules\IAM\Controllers\AuthController;
 use App\Core\Dashboard\Controllers\DashboardController;
 use App\Core\Security\CsrfMiddleware;
 use App\Core\Security\CsrfProtection;
+use App\Core\Security\SessionManager;
+use App\Core\Api\Controllers\SessionController;
+
+// Initialize secure session
+try {
+    SessionManager::init();
+} catch (Exception $e) {
+    // Session expired or invalid - redirect to login
+    header('Location: /login');
+    exit;
+}
 
 // Initialize CSRF protection
 CsrfProtection::init();
@@ -44,12 +54,11 @@ if (!$skipCsrf && $_SERVER['REQUEST_METHOD'] !== 'GET') {
     $csrfMiddleware = new CsrfMiddleware();
     $csrfMiddleware->handle();
 }
-$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // ──────────────────────────────────────────────────────────────────────────
-// If already logged in, redirect any “/” or “/login” request to /dashboard
+// If already logged in, redirect any "/" or "/login" request to /dashboard
 // ──────────────────────────────────────────────────────────────────────────
-if (isset($_SESSION['user']) && in_array($requestPath, ['/', '/login'], true)) {
+if (SessionManager::has('user') && in_array($requestPath, ['/', '/login'], true)) {
     header('Location: /dashboard');
     exit;
 }
@@ -58,11 +67,15 @@ if (isset($_SESSION['user']) && in_array($requestPath, ['/', '/login'], true)) {
 // Route definitions
 // ──────────────────────────────────────────────────────────────────────────
 $routes = [
-    '/'           => [AuthController::class,    'showLogin'],
-    '/login'      => [AuthController::class,    'showLogin'],
-    '/login.post' => [AuthController::class,    'login'],
-    '/logout'     => [AuthController::class,    'logout'],
-    '/dashboard'  => [DashboardController::class, 'index'],
+    '/'                    => [AuthController::class,    'showLogin'],
+    '/login'               => [AuthController::class,    'showLogin'],
+    '/login.post'          => [AuthController::class,    'login'],
+    '/logout'              => [AuthController::class,    'logout'],
+    '/dashboard'           => [DashboardController::class, 'index'],
+    '/user/preferences'    => [AuthController::class,    'updatePreferences'],
+    '/notifications/mark-read' => [AuthController::class, 'markNotificationsRead'],
+    '/api/session-status'  => [SessionController::class, 'status'],
+    '/api/extend-session'  => [SessionController::class, 'extend'],
 ];
 
 // redirect POST /login to /login.post
@@ -73,7 +86,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestPath === '/login') {
 // ──────────────────────────────────────────────────────────────────────────
 // Auth guard: everything except login routes requires a user
 // ──────────────────────────────────────────────────────────────────────────
-if (!in_array($requestPath, ['/login', '/login.post'], true) && !isset($_SESSION['user'])) {
+$publicRoutes = ['/login', '/login.post', '/api/health-check'];
+if (!in_array($requestPath, $publicRoutes, true) && !SessionManager::has('user')) {
+    // For API routes, return 401 instead of redirect
+    if (strpos($requestPath, '/api/') === 0) {
+        header('HTTP/1.1 401 Unauthorized');
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+    
     header('Location: /login');
     exit;
 }

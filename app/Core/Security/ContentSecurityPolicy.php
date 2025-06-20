@@ -5,7 +5,8 @@ namespace App\Core\Security;
 class ContentSecurityPolicy
 {
     private array $directives = [];
-    
+        private ?string $nonce = null;   // ← declare it here
+
     public function __construct()
     {
         // Set default secure policies
