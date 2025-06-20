@@ -1,4 +1,4 @@
-<!-- File: app/Core/Dashboard/Views/dashboard.php (Updated) -->
+<!-- File: app/Core/Dashboard/Views/dashboard.php (XSS Protected) -->
 <div class="p-6 max-w-7xl mx-auto">
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -12,7 +12,7 @@
                     +12% from last month
                 </span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['totalEmployees'] ?></h3>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= e($stats['totalEmployees']) ?></h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">Total Employees</p>
         </div>
 
@@ -26,7 +26,7 @@
                     95% attendance
                 </span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['presentToday'] ?></h3>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= e($stats['presentToday']) ?></h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">Present Today</p>
         </div>
 
@@ -40,7 +40,7 @@
                     5% of workforce
                 </span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['onLeave'] ?></h3>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= e($stats['onLeave']) ?></h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">On Leave</p>
         </div>
 
@@ -54,31 +54,8 @@
                     Urgent
                 </span>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= $stats['newApplications'] ?></h3>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100"><?= e($stats['newApplications']) ?></h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">New Applications</p>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-indigo-500 dark:hover:border-indigo-400">
-                <i class="fas fa-user-plus text-2xl text-indigo-600 dark:text-indigo-400 mb-2"></i>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Add Employee</p>
-            </button>
-            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-green-500 dark:hover:border-green-400">
-                <i class="fas fa-calendar-plus text-2xl text-green-600 dark:text-green-400 mb-2"></i>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Request Leave</p>
-            </button>
-            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-blue-500 dark:hover:border-blue-400">
-                <i class="fas fa-clock text-2xl text-blue-600 dark:text-blue-400 mb-2"></i>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Mark Attendance</p>
-            </button>
-            <button class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:border-purple-500 dark:hover:border-purple-400">
-                <i class="fas fa-chart-line text-2xl text-purple-600 dark:text-purple-400 mb-2"></i>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">View Reports</p>
-            </button>
         </div>
     </div>
 
@@ -91,14 +68,14 @@
             <div class="space-y-4">
                 <?php foreach ($recentActivities as $activity): ?>
                 <div class="flex items-start space-x-3">
-                    <div class="w-8 h-8 bg-<?= $activity['color'] ?>-100 dark:bg-<?= $activity['color'] ?>-900 rounded-full flex items-center justify-center flex-shrink-0">
-                        <i class="<?= $activity['icon'] ?> text-<?= $activity['color'] ?>-600 dark:text-<?= $activity['color'] ?>-400 text-xs"></i>
+                    <div class="w-8 h-8 bg-<?= ecss($activity['color']) ?>-100 dark:bg-<?= ecss($activity['color']) ?>-900 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="<?= attr($activity['icon']) ?> text-<?= ecss($activity['color']) ?>-600 dark:text-<?= ecss($activity['color']) ?>-400 text-xs"></i>
                     </div>
                     <div>
                         <p class="text-sm text-gray-800 dark:text-gray-200">
-                            <?= $activity['message'] ?>
+                            <?= clean($activity['message'], ['span']) ?>
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400"><?= $activity['time'] ?></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400"><?= e($activity['time']) ?></p>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -107,7 +84,7 @@
     </div>
 </div>
 
-<!-- Add JavaScript for dashboard actions -->
+<!-- Fixed JavaScript with proper escaping -->
 <script>
 function exportDashboard() {
     // Implement export functionality

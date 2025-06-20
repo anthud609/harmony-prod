@@ -4,21 +4,21 @@ namespace App\Core\Layout\Components;
 
 class Scripts
 {
-    public static function render(array $data = []): void
+   public static function render(array $data = []): void
     {
         $user = $data['user'] ?? [];
         ?>
         <script>
-            // User data from PHP session
+            // User data from PHP session - properly escaped for JavaScript context
             const userData = {
-                firstName: '<?= htmlspecialchars($user['firstName'] ?? 'Guest') ?>',
-                lastName: '<?= htmlspecialchars($user['lastName'] ?? 'User') ?>',
-                fullName: '<?= htmlspecialchars(($user['firstName'] ?? 'Guest') . ' ' . ($user['lastName'] ?? 'User')) ?>',
-                initials: '<?= htmlspecialchars(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>',
-                role: '<?= htmlspecialchars($user['role'] ?? 'user') ?>',
-                jobTitle: '<?= htmlspecialchars($user['jobTitle'] ?? 'Employee') ?>',
+                firstName: <?= ejs($user['firstName'] ?? 'Guest') ?>,
+                lastName: <?= ejs($user['lastName'] ?? 'User') ?>,
+                fullName: <?= ejs(($user['firstName'] ?? 'Guest') . ' ' . ($user['lastName'] ?? 'User')) ?>,
+                initials: <?= ejs(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>,
+                role: <?= ejs($user['role'] ?? 'user') ?>,
+                jobTitle: <?= ejs($user['jobTitle'] ?? 'Employee') ?>,
                 notificationCount: <?= (int)($user['notificationCount'] ?? 0) ?>,
-                preferredTheme: '<?= htmlspecialchars($user['preferredTheme'] ?? 'system') ?>'
+                preferredTheme: <?= ejs($user['preferredTheme'] ?? 'system') ?>
             };
             
             // Update notification badge
