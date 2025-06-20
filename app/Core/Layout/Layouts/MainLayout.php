@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Harmony HRMS') ?></title>
+    <title><?= e($title ?? 'Harmony HRMS') ?></title>
     
     <!-- Styles -->
     <style>
@@ -28,7 +28,7 @@
     <!-- Theme Script -->
     <script>
         document.documentElement.classList.add('no-transitions');
-        const userTheme = '<?= htmlspecialchars($user['preferredTheme'] ?? 'system') ?>';
+        const userTheme = '<?= e($user['preferredTheme'] ?? 'system') ?>';
         
         if (userTheme === 'dark') {
             document.documentElement.classList.add('dark');

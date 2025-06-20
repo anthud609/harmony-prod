@@ -73,7 +73,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-800 dark:text-gray-200">
-                            <?= clean($activity['message'], ['span']) ?>
+<?= e($activity['message']) ?>
                         </p>
                         <p class="text-xs text-gray-500 dark:text-gray-400"><?= e($activity['time']) ?></p>
                     </div>

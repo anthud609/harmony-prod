@@ -1,74 +1,64 @@
 <?php
-
 // File: app/Core/Security/XssProtection.php
 
 namespace App\Core\Security;
 
+/**
+ * @deprecated Use helper functions directly (e(), attr(), ejs(), etc.)
+ */
 class XssProtection
 {
     /**
-     * Escape HTML entities in the given string
+     * @deprecated Use e() helper function instead
      */
-    public static function escape($value, $flags = ENT_QUOTES | ENT_HTML5, $encoding = 'UTF-8'): string
+    public static function escape($value, $flags = null, $encoding = 'UTF-8'): string
     {
-        if (is_null($value)) {
-            return '';
-        }
-
-        if (is_array($value) || is_object($value)) {
-            return '';
-        }
-
-        return htmlspecialchars((string)$value, $flags, $encoding);
+        trigger_error('e(XssProtection::e() is deprecated. Use e() helper instead.', E_USER_DEPRECATED);
+        return e($value);
     }
 
     /**
-     * Escape HTML attributes
+     * @deprecated Use attr() helper function instead
      */
     public static function attr($value): string
     {
-        return self::escape($value, ENT_QUOTES | ENT_HTML5);
+        trigger_error('XssProtection::attr() is deprecated. Use attr() helper instead.', E_USER_DEPRECATED);
+        return attr($value);
     }
 
     /**
-     * Escape JavaScript/JSON content
+     * @deprecated Use ejs() helper function instead
      */
     public static function js($value): string
     {
-        $escaped = json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-
-        return $escaped !== false ? $escaped : '""';
+        trigger_error('XssProtection::js() is deprecated. Use ejs() helper instead.', E_USER_DEPRECATED);
+        return ejs($value);
     }
 
     /**
-     * Escape URL parameters
+     * @deprecated Use eurl() helper function instead
      */
     public static function url($value): string
     {
-        return rawurlencode((string)$value);
+        trigger_error('XssProtection::url() is deprecated. Use eurl() helper instead.', E_USER_DEPRECATED);
+        return eurl($value);
     }
 
     /**
-     * Escape CSS values
+     * @deprecated Use ecss() helper function instead
      */
     public static function css($value): string
     {
-        // Remove any potentially dangerous characters
-        return preg_replace('/[^a-zA-Z0-9\-_]/', '', (string)$value);
+        trigger_error('XssProtection::css() is deprecated. Use ecss() helper instead.', E_USER_DEPRECATED);
+        return ecss($value);
     }
 
     /**
-     * Allow specific HTML tags (for rich content)
+     * @deprecated DO NOT USE - This allows HTML which is dangerous
      */
     public static function clean($html, array $allowedTags = []): string
     {
-        if (empty($allowedTags)) {
-            // Default safe tags
-            $allowedTags = ['b', 'i', 'em', 'strong', 'span', 'p', 'br'];
-        }
-
-        $allowedTagsString = '<' . implode('><', $allowedTags) . '>';
-
-        return strip_tags((string)$html, $allowedTagsString);
+        trigger_error('XssProtection::clean() is deprecated and unsafe. Use e() instead.', E_USER_DEPRECATED);
+        return e($html);
     }
 }

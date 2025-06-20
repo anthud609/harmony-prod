@@ -15,7 +15,7 @@ class UserMenu
                     class="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <div class="relative">
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                        <?= htmlspecialchars(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>
+                        <?= e(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>
                     </div>
                     <!-- Status indicator -->
                     <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
@@ -31,17 +31,17 @@ class UserMenu
                     <div class="flex items-start space-x-3">
                         <div class="relative flex-shrink-0">
                             <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-medium">
-                                <?= htmlspecialchars(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>
+                                <?= e(strtoupper(substr($user['firstName'] ?? 'G', 0, 1) . substr($user['lastName'] ?? 'U', 0, 1))) ?>
                             </div>
                             <!-- Status indicator -->
                             <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                         </div>
                         <div class="flex-1 min-w-0">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                                <?= htmlspecialchars(($user['firstName'] ?? 'Guest') . ' ' . ($user['lastName'] ?? 'User')) ?>
+                                <?= e(($user['firstName'] ?? 'Guest') . ' ' . ($user['lastName'] ?? 'User')) ?>
                             </h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                <?= htmlspecialchars($user['username'] ?? 'user@harmonyhrs.com') ?>
+                                <?= e($user['username'] ?? 'user@harmonyhrs.com') ?>
                             </p>
                             <a href="#" class="inline-flex items-center mt-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
                                 View account

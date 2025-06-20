@@ -29,7 +29,7 @@ $remaining = $lastActivity ? max(0, 360 - $elapsed) : 0;
     <h1>Session Debug Information</h1>
     
     <div class="info">
-        <strong>Session ID:</strong> <?= htmlspecialchars($sessionId) ?><br>
+        <strong>Session ID:</strong> <?= e($sessionId) ?><br>
         <strong>Current Time:</strong> <?= date('Y-m-d H:i:s', $currentTime) ?> (<?= $currentTime ?>)<br>
         <strong>Last Activity:</strong> <?= $lastActivity ? date('Y-m-d H:i:s', $lastActivity) . " ($lastActivity)" : 'Not set' ?><br>
         <strong>Elapsed Time:</strong> <?= $elapsed ?> seconds<br>

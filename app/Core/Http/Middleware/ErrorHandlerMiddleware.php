@@ -91,10 +91,10 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
             </html>',
             get_class($e),
             get_class($e),
-            htmlspecialchars($e->getMessage()),
+            e($e->getMessage()),
             $e->getFile(),
             $e->getLine(),
-            htmlspecialchars($e->getTraceAsString())
+            e($e->getTraceAsString())
         );
     }
 

@@ -131,8 +131,8 @@ class CsrfProtection
 
         return sprintf(
             '<input type="hidden" name="%s" value="%s" />',
-            htmlspecialchars(self::TOKEN_NAME),
-            htmlspecialchars($token)
+            e(self::TOKEN_NAME),
+            e($token)
         );
     }
 
@@ -145,8 +145,8 @@ class CsrfProtection
 
         return sprintf(
             '<meta name="%s" content="%s" />',
-            htmlspecialchars(self::TOKEN_NAME),
-            htmlspecialchars($token)
+            e(self::TOKEN_NAME),
+            e($token)
         );
     }
 

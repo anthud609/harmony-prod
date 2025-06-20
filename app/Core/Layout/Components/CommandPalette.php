@@ -99,9 +99,9 @@ class CommandPalette
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent</p>
             <?php foreach ($this->getRecentSearches($data) as $search) : ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
-                    data-search="<?= htmlspecialchars($search['query']) ?>">
+                    data-search="<?= e($search['query']) ?>">
                 <i class="fas fa-clock text-gray-400 dark:text-gray-500 mr-3"></i>
-                <span class="text-sm text-gray-700 dark:text-gray-300"><?= htmlspecialchars($search['query']) ?></span>
+                <span class="text-sm text-gray-700 dark:text-gray-300"><?= e($search['query']) ?></span>
             </button>
             <?php endforeach; ?>
         </div>

@@ -78,8 +78,8 @@ try {
     
     if (($_ENV['APP_DEBUG'] ?? false) === true || ($_ENV['APP_DEBUG'] ?? false) === 'true') {
         echo '<h1>500 - Internal Server Error</h1>';
-        echo '<pre>' . htmlspecialchars($e->getMessage()) . '</pre>';
-        echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+        echo '<pre>' . e($e->getMessage()) . '</pre>';
+        echo '<pre>' . e($e->getTraceAsString()) . '</pre>';
     } else {
         echo '<h1>500 - Internal Server Error</h1>';
         echo '<p>Something went wrong. Please try again later.</p>';

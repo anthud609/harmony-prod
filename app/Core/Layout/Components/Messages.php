@@ -55,10 +55,10 @@ class Messages
             </div>
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between mb-1">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"><?= htmlspecialchars($message['sender']) ?></h4>
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"><?= e($message['sender']) ?></h4>
                     <span class="text-xs text-gray-500 dark:text-gray-400"><?= $message['time'] ?></span>
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2"><?= htmlspecialchars($message['preview']) ?></p>
+                <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2"><?= e($message['preview']) ?></p>
             </div>
         </a>
         <?php

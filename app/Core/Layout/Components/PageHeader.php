@@ -34,13 +34,13 @@ class PageHeader
                             <?php endif; ?>
                             <li>
                                 <?php if (isset($crumb['url']) && $index < count($breadcrumbs) - 1) : ?>
-                                    <a href="<?= htmlspecialchars($crumb['url']) ?>" 
+                                    <a href="<?= e($crumb['url']) ?>" 
                                        class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                                        <?= htmlspecialchars($crumb['label']) ?>
+                                        <?= e($crumb['label']) ?>
                                     </a>
                                 <?php else : ?>
                                     <span class="text-gray-700 dark:text-gray-300 font-medium">
-                                        <?= htmlspecialchars($crumb['label']) ?>
+                                        <?= e($crumb['label']) ?>
                                     </span>
                                 <?php endif; ?>
                             </li>
@@ -55,7 +55,7 @@ class PageHeader
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
                             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
-                                <?= htmlspecialchars($title) ?>
+                                <?= e($title) ?>
                             </h1>
                             
                             <!-- Favorite Button -->
@@ -81,7 +81,7 @@ class PageHeader
                             
                             <!-- Help Icon -->
                             <?php if ($helpLink !== '#') : ?>
-                            <a href="<?= htmlspecialchars($helpLink) ?>"
+                            <a href="<?= e($helpLink) ?>"
                                target="_blank"
                                class="group relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                aria-label="Help">
@@ -99,7 +99,7 @@ class PageHeader
                         
                         <?php if ($description) : ?>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            <?= htmlspecialchars($description) ?>
+                            <?= e($description) ?>
                         </p>
                         <?php endif; ?>
                     </div>
@@ -116,7 +116,7 @@ class PageHeader
                                         <?php if (isset($action['icon'])) : ?>
                                         <i class="<?= $action['icon'] ?> mr-2 -ml-1 w-4 h-4"></i>
                                         <?php endif; ?>
-                                        <?= htmlspecialchars($action['label']) ?>
+                                        <?= e($action['label']) ?>
                                         <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                         </svg>
@@ -128,13 +128,13 @@ class PageHeader
                                             <?php if ($item === 'divider') : ?>
                                                 <div class="border-t border-gray-200 dark:border-gray-700"></div>
                                             <?php else : ?>
-                                                <a href="<?= htmlspecialchars($item['url'] ?? '#') ?>"
+                                                <a href="<?= e($item['url'] ?? '#') ?>"
                                                    onclick="<?= $item['onclick'] ?? '' ?>"
                                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors <?= isset($item['danger']) && $item['danger'] ? 'text-red-600 dark:text-red-400' : '' ?>">
                                                     <?php if (isset($item['icon'])) : ?>
                                                     <i class="<?= $item['icon'] ?> mr-3 w-4 h-4"></i>
                                                     <?php endif; ?>
-                                                    <?= htmlspecialchars($item['label']) ?>
+                                                    <?= e($item['label']) ?>
                                                 </a>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
@@ -142,13 +142,13 @@ class PageHeader
                                 </div>
                             <?php else : ?>
                                 <!-- Regular Button -->
-                                <a href="<?= htmlspecialchars($action['url'] ?? '#') ?>"
+                                <a href="<?= e($action['url'] ?? '#') ?>"
                                    onclick="<?= $action['onclick'] ?? '' ?>"
                                    class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg <?= $action['variant'] === 'primary' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' ?> transition-colors">
                                     <?php if (isset($action['icon'])) : ?>
                                     <i class="<?= $action['icon'] ?> mr-2 -ml-1 w-4 h-4"></i>
                                     <?php endif; ?>
-                                    <?= htmlspecialchars($action['label']) ?>
+                                    <?= e($action['label']) ?>
                                 </a>
                             <?php endif; ?>
                         <?php endforeach; ?>

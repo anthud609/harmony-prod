@@ -15,11 +15,11 @@ if ($errorLog && file_exists($errorLog)) {
     echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
     foreach ($lines as $line) {
         if (stripos($line, 'error') !== false) {
-            echo "<span style='color: red;'>" . htmlspecialchars($line) . "</span>";
+            echo "<span style='color: red;'>" . e($line) . "</span>";
         } elseif (stripos($line, 'warning') !== false) {
-            echo "<span style='color: orange;'>" . htmlspecialchars($line) . "</span>";
+            echo "<span style='color: orange;'>" . e($line) . "</span>";
         } else {
-            echo htmlspecialchars($line);
+            echo e($line);
         }
     }
     echo "</pre>";
@@ -33,7 +33,7 @@ $apacheErrorLog = 'C:/xampp/apache/logs/error.log';
 if (file_exists($apacheErrorLog)) {
     $lines = array_slice(file($apacheErrorLog), -20); // Last 20 lines
     echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
-    echo htmlspecialchars(implode('', $lines));
+    echo e(implode('', $lines));
     echo "</pre>";
 } else {
     echo "<p>Apache error log not found at typical location</p>";
@@ -49,7 +49,7 @@ if (is_dir($appLogDir)) {
             echo "<h3>" . basename($logFile) . "</h3>";
             $lines = array_slice(file($logFile), -20); // Last 20 lines
             echo "<pre style='background: #f0f0f0; padding: 10px; overflow-x: auto;'>";
-            echo htmlspecialchars(implode('', $lines));
+            echo e(implode('', $lines));
             echo "</pre>";
         }
     } else {
@@ -80,7 +80,7 @@ if (file_exists($htaccess)) {
     echo "<p style='color: green;'>âœ“ .htaccess exists</p>";
     echo "<h3>.htaccess content:</h3>";
     echo "<pre style='background: #f0f0f0; padding: 10px;'>";
-    echo htmlspecialchars(file_get_contents($htaccess));
+    echo e(file_get_contents($htaccess));
     echo "</pre>";
 } else {
     echo "<p style='color: red;'>âœ— .htaccess NOT found</p>";
