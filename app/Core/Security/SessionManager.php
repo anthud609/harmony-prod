@@ -4,7 +4,7 @@ namespace App\Core\Security;
 
 class SessionManager
 {
-    private const SESSION_LIFETIME = 3600; // 6 minutes (5 min activity + 1 min warning)
+    private const SESSION_LIFETIME = 360; // 6 minutes total (5 min activity + 1 min warning)
     private const SESSION_NAME = 'HARMONY_SESSID';
     private const FINGERPRINT_KEY = '_session_fingerprint';
     private const LAST_ACTIVITY_KEY = '_last_activity';
@@ -24,7 +24,10 @@ class SessionManager
         ini_set('session.use_strict_mode', '1');
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_samesite', 'Lax');
-        ini_set('session.gc_maxlifetime', (string)self::SESSION_LIFETIME);
+        
+        // IMPORTANT: Set gc_maxlifetime to be longer than our activity timeout
+        // This ensures PHP doesn't garbage collect our session prematurely
+        ini_set('session.gc_maxlifetime', '3600'); // 1 hour - much longer than our timeout
         
         // Use secure cookies if HTTPS
         if (self::isHttps()) {
@@ -76,7 +79,8 @@ class SessionManager
     {
         // Check session timeout
         if (isset($_SESSION[self::LAST_ACTIVITY_KEY])) {
-            if (time() - $_SESSION[self::LAST_ACTIVITY_KEY] > self::SESSION_LIFETIME) {
+            $elapsed = time() - $_SESSION[self::LAST_ACTIVITY_KEY];
+            if ($elapsed > self::SESSION_LIFETIME) {
                 self::destroy();
                 throw new \Exception('Session expired');
             }

@@ -81,34 +81,45 @@
     
     <!-- Session Handler Script -->
      <script>
-        // Updated Session Handler Implementation
+// Debug Session Handler - Extensive Logging Version
 window.SessionHandler = {
-    warningTime: 60, // Show warning 1 minute (60 seconds) before timeout
-    checkInterval: 30000, // Check every 30 seconds
+    warningTime: 60, // Show warning 1 minute before timeout
+    checkInterval: 5000, // Check every 5 seconds
     warningShown: false,
     timer: null,
+    sessionStartTime: Date.now(),
     
     init() {
+        console.log('🚀 Session Handler Initializing...');
+        console.log('Config:', {
+            warningTime: this.warningTime,
+            checkInterval: this.checkInterval,
+            expectedTimeout: '5 minutes activity + 1 minute warning = 6 minutes total'
+        });
+        
         this.startMonitoring();
         this.setupActivityListeners();
+        
+        // Do an immediate check
+        this.checkSessionStatus();
     },
     
     startMonitoring() {
-        // Clear any existing timer
         if (this.timer) {
             clearInterval(this.timer);
         }
         
-        // Check session status periodically
+        console.log('⏰ Starting session monitoring, checking every', this.checkInterval/1000, 'seconds');
+        
         this.timer = setInterval(() => {
             this.checkSessionStatus();
         }, this.checkInterval);
-        
-        // Check immediately
-        this.checkSessionStatus();
     },
     
     async checkSessionStatus() {
+        const checkTime = new Date().toLocaleTimeString();
+        console.log(`🔍 [${checkTime}] Checking session status...`);
+        
         try {
             const response = await fetch('/api/session-status', {
                 method: 'GET',
@@ -117,40 +128,55 @@ window.SessionHandler = {
                 }
             });
             
+            console.log('📡 Response status:', response.status);
+            
             if (!response.ok) {
-                // Session expired
+                console.error('❌ Session check failed - not authenticated');
                 this.handleSessionExpired();
                 return;
             }
             
             const data = await response.json();
-            const remainingTime = data.remainingTime || 0;
+            console.log('📊 Session data:', data);
             
-            console.log('Session check - remaining time:', remainingTime, 'seconds', 'warning threshold:', this.warningTime); // Debug log
+            const remainingTime = data.remainingTime || 0;
+            const remainingMinutes = Math.floor(remainingTime / 60);
+            const remainingSeconds = remainingTime % 60;
+            
+            console.log(`⏳ Remaining time: ${remainingMinutes}m ${remainingSeconds}s (${remainingTime} total seconds)`);
+            console.log(`⚠️  Warning will show at: ${this.warningTime} seconds`);
             
             if (remainingTime <= 0) {
+                console.error('💀 Session expired (remaining time: 0)');
                 this.handleSessionExpired();
             } else if (remainingTime <= this.warningTime && !this.warningShown) {
+                console.warn('⚠️ Showing warning - remaining time:', remainingTime);
                 this.showWarning(remainingTime);
             } else if (remainingTime > this.warningTime && this.warningShown) {
+                console.log('✅ Session extended - hiding warning');
                 this.hideWarning();
+            } else {
+                console.log('✅ Session OK');
             }
+            
         } catch (error) {
-            console.error('Session check failed:', error);
+            console.error('🚨 Session check error:', error);
         }
     },
     
     setupActivityListeners() {
-        // Extend session on user activity
-        const events = ['mousedown', 'keypress', 'scroll', 'touchstart'];
-        let lastActivity = Date.now();
-        const activityThreshold = 30000; // 30 seconds
+        console.log('👂 Setting up activity listeners...');
+        
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        let lastExtension = 0;
         
         events.forEach(event => {
-            document.addEventListener(event, () => {
+            document.addEventListener(event, (e) => {
                 const now = Date.now();
-                if (now - lastActivity > activityThreshold) {
-                    lastActivity = now;
+                // Only log and extend every 30 seconds to avoid spam
+                if (now - lastExtension > 30000) {
+                    console.log('🖱️ User activity detected:', event);
+                    lastExtension = now;
                     this.extendSession();
                 }
             }, { passive: true });
@@ -158,34 +184,39 @@ window.SessionHandler = {
     },
     
     async extendSession() {
+        console.log('📤 Extending session...');
+        
         try {
             const response = await fetch('/api/extend-session', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-Token': window.CsrfToken.getToken()
+                    'X-CSRF-Token': window.CsrfToken ? window.CsrfToken.getToken() : ''
                 }
             });
             
             if (response.ok) {
-                console.log('Session extended successfully'); // Debug log
+                const data = await response.json();
+                console.log('✅ Session extended successfully:', data);
                 
-                // Reset warning if shown
                 if (this.warningShown) {
                     this.hideWarning();
                 }
+            } else {
+                console.error('❌ Failed to extend session:', response.status);
             }
         } catch (error) {
-            console.error('Failed to extend session:', error);
+            console.error('🚨 Extension error:', error);
         }
     },
     
     showWarning(remainingTime) {
+        console.log('🚨 SHOWING WARNING - Remaining time:', remainingTime, 'seconds');
         this.warningShown = true;
         
-        const seconds = remainingTime;
+        // Rest of the warning code...
         const warningHtml = `
-            <div id="session-warning" class="fixed top-20 right-4 max-w-sm bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg shadow-lg p-4 z-50 animate-slide-in">
+            <div id="session-warning" class="fixed top-20 right-4 max-w-sm bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg shadow-lg p-4 z-50">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +228,7 @@ window.SessionHandler = {
                             Session Expiring Soon
                         </h3>
                         <p id="warning-message" class="mt-1 text-sm text-orange-700 dark:text-orange-300">
-                            Your session will expire in ${seconds} seconds. 
+                            Your session will expire in ${remainingTime} seconds. 
                             Move your mouse or press any key to stay logged in.
                         </p>
                         <div class="mt-3 flex space-x-2">
@@ -215,16 +246,12 @@ window.SessionHandler = {
             </div>
         `;
         
-        // Remove any existing warning
         const existingWarning = document.getElementById('session-warning');
         if (existingWarning) {
             existingWarning.remove();
         }
         
-        // Add new warning
         document.body.insertAdjacentHTML('beforeend', warningHtml);
-        
-        // Update countdown
         this.updateCountdown(remainingTime);
     },
     
@@ -249,24 +276,24 @@ window.SessionHandler = {
     },
     
     hideWarning() {
+        console.log('✅ Hiding warning');
         this.warningShown = false;
         const warning = document.getElementById('session-warning');
         if (warning) {
-            warning.classList.add('animate-slide-out');
-            setTimeout(() => warning.remove(), 300);
+            warning.remove();
         }
     },
     
     handleSessionExpired() {
-        // Clear timer
+        console.error('💀 SESSION EXPIRED - Redirecting to login...');
+        
         if (this.timer) {
             clearInterval(this.timer);
         }
         
-        // Hide any existing warning
         this.hideWarning();
         
-        // Show modal
+        // Show expired modal
         const modalHtml = `
             <div id="session-expired-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
@@ -280,7 +307,7 @@ window.SessionHandler = {
                             Session Expired
                         </h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                            Your session has expired due to inactivity. Please log in again to continue.
+                            Your session has expired. Please log in again.
                         </p>
                         <button onclick="window.location.href='/login'" 
                                 class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
@@ -293,56 +320,22 @@ window.SessionHandler = {
         
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         
-        // Redirect after 5 seconds
         setTimeout(() => {
             window.location.href = '/login';
-        }, 5000);
+        }, 3000);
     },
     
     logout() {
+        console.log('👋 User logged out');
         window.location.href = '/logout';
     }
 };
 
-// Initialize session handler when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM Ready - Initializing Session Handler');
     SessionHandler.init();
 });
-
-// Add CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slide-in {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slide-out {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-    
-    .animate-slide-in {
-        animation: slide-in 0.3s ease-out;
-    }
-    
-    .animate-slide-out {
-        animation: slide-out 0.3s ease-out;
-    }
-`;
-document.head.appendChild(style);
      </script>
     
     <?php if (isset($additionalScripts)): ?>
