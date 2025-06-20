@@ -17,8 +17,7 @@ class ControllerServiceProvider implements ServiceProviderInterface
         return [
             // Services
             DashboardService::class => \DI\autowire(),
-            AuthService::class => \DI\autowire()
-                ->constructorParameter('sessionManager', \DI\get(SessionManager::class)),
+            AuthService::class => \DI\autowire(), // AuthService doesn't need constructor params
             
             // Controllers with injected dependencies
             DashboardController::class => \DI\autowire()
