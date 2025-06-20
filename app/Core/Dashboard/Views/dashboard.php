@@ -1,3 +1,27 @@
+<?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user'])) {
+    header('Location: /login');
+    exit;
+}
+
+// Get user data from session
+$user = $_SESSION['user'];
+$firstName = $user['firstName'] ?? 'Guest';
+$lastName = $user['lastName'] ?? 'User';
+$fullName = $firstName . ' ' . $lastName;
+$initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+$role = $user['role'] ?? 'user';
+$jobTitle = $user['jobTitle'] ?? 'Employee';
+$notificationCount = $user['notificationCount'] ?? 0;
+$preferredTheme = $user['preferredTheme'] ?? 'system';
+$username = $user['username'] ?? 'user@example.com';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,12 +55,20 @@
     }
   </style>
   <script>
-    // Apply dark mode class before page renders to prevent flash
+    // Apply dark mode class before page renders based on user preference
     document.documentElement.classList.add('no-transitions');
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    
+    const userTheme = '<?= htmlspecialchars($preferredTheme) ?>';
+    
+    if (userTheme === 'dark') {
       document.documentElement.classList.add('dark');
-    } else {
+    } else if (userTheme === 'light') {
       document.documentElement.classList.remove('dark');
+    } else {
+      // System preference
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      }
     }
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -52,11 +84,11 @@
 
   <!-- Mobile menu overlay -->
   <div id="mobileMenuOverlay"
-       class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300"
+       class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden transition-opacity duration-300"
        onclick="toggleMobileMenu()"></div>
 
   <!-- Header -->
-  <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-30 transition-all duration-300">
+  <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-50">
     <div class="flex items-center justify-between h-16 px-4 lg:px-6">
 
       <!-- left: toggles + logo -->
@@ -95,9 +127,13 @@
         </button>
 
         <!-- notifications -->
-        <button class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button id="notificationBtn" onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <i class="fas fa-bell text-gray-700 dark:text-gray-300"></i>
-          <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          <?php if ($notificationCount > 0): ?>
+          <span id="notificationBadge" class="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+            <?= $notificationCount > 99 ? '99+' : htmlspecialchars($notificationCount) ?>
+          </span>
+          <?php endif; ?>
         </button>
 
         <!-- theme toggle -->
@@ -111,11 +147,11 @@
           <button onclick="toggleUserMenu()"
                   class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-medium">J</span>
+              <span id="userInitials" class="text-white text-sm font-medium"><?= htmlspecialchars($initials) ?></span>
             </div>
             <div class="hidden sm:block text-left">
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">John</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Admin</p>
+              <p id="userName" class="text-sm font-medium text-gray-700 dark:text-gray-200"><?= htmlspecialchars($fullName) ?></p>
+              <p id="userRole" class="text-xs text-gray-500 dark:text-gray-400"><?= htmlspecialchars(ucfirst($role)) ?> | <?= htmlspecialchars($jobTitle) ?></p>
             </div>
             <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 text-xs"></i>
           </button>
@@ -146,7 +182,7 @@
 
   <!-- Sidebar -->
   <aside id="sidebar"
-         class="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full lg:translate-x-0 transition-all duration-300 z-20 overflow-hidden">
+         class="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full lg:translate-x-0 transition-all duration-300 z-40 overflow-hidden">
     <nav class="flex flex-col h-full">
       <div class="px-3 py-4">
         <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Navigation</p>
@@ -248,8 +284,8 @@
     <div class="p-6 max-w-7xl mx-auto">
       <!-- page header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-          Welcome back, John! 👋
+        <h1 id="welcomeMessage" class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+          Welcome back, <?= htmlspecialchars($firstName) ?>! 👋
         </h1>
         <p class="text-gray-600 dark:text-gray-400">
           Here's what's happening with your team today.
@@ -385,8 +421,61 @@
   </main>
 
   <script>
+    // User data from PHP session
+    const userData = {
+      firstName: '<?= htmlspecialchars($firstName) ?>',
+      lastName: '<?= htmlspecialchars($lastName) ?>',
+      fullName: '<?= htmlspecialchars($fullName) ?>',
+      initials: '<?= htmlspecialchars($initials) ?>',
+      role: '<?= htmlspecialchars($role) ?>',
+      jobTitle: '<?= htmlspecialchars($jobTitle) ?>',
+      notificationCount: <?= (int)$notificationCount ?>,
+      preferredTheme: '<?= htmlspecialchars($preferredTheme) ?>'
+    };
+    
+    // Update notification badge
+    function updateNotificationBadge(count) {
+      const badge = document.getElementById('notificationBadge');
+      if (!badge && count > 0) {
+        // Create badge if it doesn't exist
+        const btn = document.getElementById('notificationBtn');
+        const newBadge = document.createElement('span');
+        newBadge.id = 'notificationBadge';
+        newBadge.className = 'absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1';
+        newBadge.textContent = count > 99 ? '99+' : count;
+        btn.appendChild(newBadge);
+      } else if (badge) {
+        if (count > 0) {
+          badge.textContent = count > 99 ? '99+' : count;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+    
+    // Toggle notifications
+    function toggleNotifications() {
+      // Clear notification count
+      userData.notificationCount = 0;
+      updateNotificationBadge(0);
+      
+      // Send AJAX request to mark notifications as read
+      fetch('/notifications/mark-read', { 
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).catch(err => console.log('Error marking notifications as read'));
+    }
+    
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
+      // Remove no-transitions class after page load
+      setTimeout(() => {
+        document.documentElement.classList.remove('no-transitions');
+      }, 100);
+      
       // Theme initialization
       const themeIcon = document.getElementById('themeIcon');
       
@@ -404,17 +493,37 @@
 
       // Make toggleDarkMode globally available
       window.toggleDarkMode = function() {
+        // Add transition class for smooth theme change
+        document.documentElement.classList.add('theme-transition');
+        
         // Toggle dark class on html element
         if (document.documentElement.classList.contains('dark')) {
           document.documentElement.classList.remove('dark');
           localStorage.theme = 'light';
+          userData.preferredTheme = 'light';
         } else {
           document.documentElement.classList.add('dark');
           localStorage.theme = 'dark';
+          userData.preferredTheme = 'dark';
         }
         
         // Update icon
         updateThemeIcon();
+        
+        // Save theme preference to server
+        fetch('/user/preferences', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: 'theme=' + userData.preferredTheme
+        }).catch(err => console.log('Error saving theme preference'));
+        
+        // Remove transition class after animation completes
+        setTimeout(() => {
+          document.documentElement.classList.remove('theme-transition');
+        }, 300);
       }
     });
 
@@ -528,18 +637,20 @@
         userMenu.classList.add('hidden');
       }
       
-      // Close sidebar dropdowns when clicking outside sidebar
-      const sidebar = document.getElementById('sidebar');
-      const dropdownButton = e.target.closest('[onclick*="toggleDropdown"]');
-      
-      if (!sidebar.contains(e.target) || (!dropdownButton && !e.target.closest('#employeesDropdown') && !e.target.closest('#attendanceDropdown'))) {
-        // Close all dropdowns
-        const allDropdowns = ['employeesDropdown', 'attendanceDropdown'];
-        allDropdowns.forEach(dropdownId => {
-          document.getElementById(dropdownId).classList.add('hidden');
-          document.getElementById(dropdownId + 'Icon').classList.remove('rotate-180');
-          localStorage.setItem(dropdownId + 'Open', 'false');
-        });
+      // Close sidebar dropdowns when clicking outside sidebar (only on desktop)
+      if (window.innerWidth >= 1024) {
+        const sidebar = document.getElementById('sidebar');
+        const dropdownButton = e.target.closest('[onclick*="toggleDropdown"]');
+        
+        if (!sidebar.contains(e.target) || (!dropdownButton && !e.target.closest('#employeesDropdown') && !e.target.closest('#attendanceDropdown'))) {
+          // Close all dropdowns
+          const allDropdowns = ['employeesDropdown', 'attendanceDropdown'];
+          allDropdowns.forEach(dropdownId => {
+            document.getElementById(dropdownId).classList.add('hidden');
+            document.getElementById(dropdownId + 'Icon').classList.remove('rotate-180');
+            localStorage.setItem(dropdownId + 'Open', 'false');
+          });
+        }
       }
     });
 
