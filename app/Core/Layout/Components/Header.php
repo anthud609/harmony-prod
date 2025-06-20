@@ -1,12 +1,27 @@
 <?php
-
-
-// File: app/Core/Layout/Components/Header.php (Fixed)
+// File: app/Core/Layout/Components/Header.php
 namespace App\Core\Layout\Components;
 
 class Header
 {
-    public static function render(array $data = []): void
+    private Messages $messages;
+    private Notifications $notifications;
+    private CommandPalette $commandPalette;
+    private UserMenu $userMenu;
+    
+    public function __construct(
+        Messages $messages,
+        Notifications $notifications,
+        CommandPalette $commandPalette,
+        UserMenu $userMenu
+    ) {
+        $this->messages = $messages;
+        $this->notifications = $notifications;
+        $this->commandPalette = $commandPalette;
+        $this->userMenu = $userMenu;
+    }
+    
+    public function render(array $data = []): void
     {
         ?>
         <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-50">
@@ -48,8 +63,8 @@ class Header
                         <i class="fas fa-search text-gray-700 dark:text-gray-300"></i>
                     </button>
 
-                    <?php Messages::renderDropdown($data); ?>
-                    <?php Notifications::renderDropdown($data); ?>
+                    <?php $this->messages->renderDropdown($data); ?>
+                    <?php $this->notifications->renderDropdown($data); ?>
 
                     <!-- Theme toggle (desktop only) -->
                     <button id="themeToggle" onclick="toggleDarkMode()"
@@ -58,12 +73,12 @@ class Header
                     </button>
 
                     <!-- User menu -->
-                    <?php UserMenu::render($data); ?>
+                    <?php $this->userMenu->render($data); ?>
                 </div>
             </div>
         </header>
 
-        <?php CommandPalette::render($data); ?>
+        <?php $this->commandPalette->render($data); ?>
         <?php
     }
 }

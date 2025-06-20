@@ -2,28 +2,26 @@
 // File: app/Core/Layout/LayoutManager.php
 namespace App\Core\Layout;
 
-use App\Core\Layout\Components\Header;
-use App\Core\Layout\Components\Sidebar;
-use App\Core\Layout\Components\Scripts;
-use App\Core\Layout\Components\UserMenu;
-use App\Core\Layout\Components\Messages;
-use App\Core\Layout\Components\Notifications;
-use App\Core\Layout\Components\CommandPalette;
-use App\Core\Layout\Components\GlobalScripts;
-use App\Core\Layout\Components\PageHeader;
 use App\Core\Security\SessionManager;
 
 class LayoutManager
 {
     protected array $data = [];
     protected string $layout = 'main';
+    protected SessionManager $sessionManager;
+    protected ComponentFactory $componentFactory;
     
-    public function __construct()
-    {
-        // Set default data using SessionManager
+    public function __construct(
+        SessionManager $sessionManager,
+        ComponentFactory $componentFactory
+    ) {
+        $this->sessionManager = $sessionManager;
+        $this->componentFactory = $componentFactory;
+        
+        // Set default data using injected SessionManager
         $this->data = [
             'title' => 'Harmony HRMS',
-            'user' => SessionManager::getUser(),
+            'user' => $this->sessionManager->getUser(),
             'breadcrumbs' => [],
             'pageActions' => [],
             'pageDescription' => '',
@@ -86,31 +84,18 @@ class LayoutManager
     {
         $data = array_merge($this->data, $componentData);
         
-        // Map component names to their class methods
-        $componentMap = [
-            'header' => [Header::class, 'render'],
-            'sidebar' => [Sidebar::class, 'render'],
-            'scripts' => [Scripts::class, 'render'],
-            'userMenu' => [UserMenu::class, 'render'],
-            'messages' => [Messages::class, 'renderDropdown'],
-            'notifications' => [Notifications::class, 'renderDropdown'],
-            'commandPalette' => [CommandPalette::class, 'render'],
-            'globalScripts' => [GlobalScripts::class, 'render'],
-            'pageHeader' => [PageHeader::class, 'render']
-        ];
-        
-        if (isset($componentMap[$component])) {
-            [$class, $method] = $componentMap[$component];
-            $class::$method($data);
-        } else {
-            // Fallback to old file-based approach if component not in map
-            $componentFile = __DIR__ . "/Components/" . ucfirst($component) . ".php";
-            if (file_exists($componentFile)) {
-                extract($data);
-                require $componentFile;
+        try {
+            // Use the component factory to create and render the component
+            $componentInstance = $this->componentFactory->create($component);
+            
+            // All components should have a render method
+            if (method_exists($componentInstance, 'render')) {
+                $componentInstance->render($data);
             } else {
-                throw new \Exception("Component '{$component}' not found");
+                throw new \Exception("Component '{$component}' does not have a render method");
             }
+        } catch (\Exception $e) {
+            throw new \Exception("Error rendering component '{$component}': " . $e->getMessage());
         }
     }
 }

@@ -6,6 +6,13 @@ use App\Core\Security\SessionManager;
 
 class SessionController
 {
+    private SessionManager $sessionManager;
+    
+    public function __construct(SessionManager $sessionManager)
+    {
+        $this->sessionManager = $sessionManager;
+    }
+    
     /**
      * Get session status (for AJAX)
      */
@@ -13,20 +20,21 @@ class SessionController
     {
         header('Content-Type: application/json');
         
-        if (!SessionManager::isLoggedIn()) {
+        if (!$this->sessionManager->isLoggedIn()) {
             http_response_code(401);
             echo json_encode(['error' => 'Not authenticated']);
             exit;
         }
         
-        $remainingTime = SessionManager::getRemainingLifetime();
+        $remainingTime = $this->sessionManager->getRemainingLifetime();
+        $user = $this->sessionManager->get('user');
         
         echo json_encode([
             'authenticated' => true,
             'remainingTime' => $remainingTime,
             'user' => [
-                'name' => SessionManager::get('user')['firstName'] . ' ' . SessionManager::get('user')['lastName'],
-                'username' => SessionManager::get('user')['username']
+                'name' => $user['firstName'] . ' ' . $user['lastName'],
+                'username' => $user['username']
             ]
         ]);
     }
@@ -38,18 +46,18 @@ class SessionController
     {
         header('Content-Type: application/json');
         
-        if (!SessionManager::isLoggedIn()) {
+        if (!$this->sessionManager->isLoggedIn()) {
             http_response_code(401);
             echo json_encode(['error' => 'Not authenticated']);
             exit;
         }
         
         // Extend the session
-        SessionManager::extend();
+        $this->sessionManager->extend();
         
         echo json_encode([
             'success' => true,
-            'remainingTime' => SessionManager::getRemainingLifetime()
+            'remainingTime' => $this->sessionManager->getRemainingLifetime()
         ]);
     }
 }

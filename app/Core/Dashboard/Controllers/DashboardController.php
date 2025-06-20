@@ -4,34 +4,42 @@ namespace App\Core\Dashboard\Controllers;
 
 use App\Core\Layout\LayoutManager;
 use App\Core\Security\SessionManager;
+use App\Core\Dashboard\Services\DashboardService;
 
 class DashboardController
 {
-    protected LayoutManager $layout;
+    protected LayoutManager $layoutManager;
+    protected SessionManager $sessionManager;
+    protected DashboardService $dashboardService;
     
-    public function __construct()
-    {
-        $this->layout = new LayoutManager();
+    public function __construct(
+        LayoutManager $layoutManager,
+        SessionManager $sessionManager,
+        DashboardService $dashboardService
+    ) {
+        $this->layoutManager = $layoutManager;
+        $this->sessionManager = $sessionManager;
+        $this->dashboardService = $dashboardService;
     }
     
     public function index(): void
     {
-        // Check if user is logged in using SessionManager
-        if (!SessionManager::isLoggedIn()) {
+        // Check if user is logged in using injected SessionManager
+        if (!$this->sessionManager->isLoggedIn()) {
             header('Location: /login');
             exit;
         }
         
         // Get user from session
-        $user = SessionManager::getUser();
+        $user = $this->sessionManager->getUser();
         
-        // Prepare data for the view
+        // Prepare data for the view using service
         $data = [
             'title' => 'Dashboard – Harmony HRMS',
             'pageTitle' => 'Dashboard',
             'pageDescription' => 'Monitor your organization\'s key metrics and recent activities',
-            'stats' => $this->getDashboardStats(),
-            'recentActivities' => $this->getRecentActivities(),
+            'stats' => $this->dashboardService->getDashboardStats(),
+            'recentActivities' => $this->dashboardService->getRecentActivities(),
             'helpLink' => 'https://docs.harmonyhrms.com/dashboard',
             'pageId' => 'dashboard-home',
             'isFavorite' => in_array('dashboard-home', $user['favorites'] ?? [])
@@ -44,7 +52,20 @@ class DashboardController
         ];
         
         // Set page actions
-        $pageActions = [
+        $pageActions = $this->getPageActions();
+        
+        // Render the view with the layout
+        $this->layoutManager
+            ->setLayout('main')
+            ->with($data)
+            ->setBreadcrumbs($breadcrumbs)
+            ->setPageActions($pageActions)
+            ->render(__DIR__ . '/../Views/dashboard.php');
+    }
+    
+    protected function getPageActions(): array
+    {
+        return [
             [
                 'label' => 'Export Report',
                 'icon' => 'fas fa-download',
@@ -84,57 +105,12 @@ class DashboardController
                 'onclick' => 'openAddWidgetModal(); return false;'
             ]
         ];
-        
-        // Render the view with the layout
-        $this->layout
-            ->setLayout('main')
-            ->with($data)
-            ->setBreadcrumbs($breadcrumbs)
-            ->setPageActions($pageActions)
-            ->render(__DIR__ . '/../Views/dashboard.php');
-    }
-    
-    protected function getDashboardStats(): array
-    {
-        return [
-            'totalEmployees' => 284,
-            'presentToday' => 270,
-            'onLeave' => 14,
-            'newApplications' => 8
-        ];
-    }
-    
-    protected function getRecentActivities(): array
-    {
-        return [
-            [
-                'type' => 'new_employee',
-                'icon' => 'fas fa-user-plus',
-                'color' => 'blue',
-                'message' => '<span class="font-medium">Sarah Johnson</span> joined as Senior Developer',
-                'time' => '2 hours ago'
-            ],
-            [
-                'type' => 'leave_approved',
-                'icon' => 'fas fa-check',
-                'color' => 'green',
-                'message' => 'Leave request approved for <span class="font-medium">Michael Chen</span>',
-                'time' => '5 hours ago'
-            ],
-            [
-                'type' => 'leave_request',
-                'icon' => 'fas fa-calendar',
-                'color' => 'orange',
-                'message' => '<span class="font-medium">Emma Davis</span> requested leave for Dec 25-27',
-                'time' => 'Yesterday'
-            ]
-        ];
     }
 
     public function updateWidget(): void
     {
         // Check authentication
-        if (!SessionManager::isLoggedIn()) {
+        if (!$this->sessionManager->isLoggedIn()) {
             header('HTTP/1.1 401 Unauthorized');
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Unauthorized']);
@@ -146,9 +122,10 @@ class DashboardController
         $widgetId = $_POST['widget_id'] ?? null;
         $configuration = $_POST['configuration'] ?? [];
         
-        // Process the update...
+        // Process the update using service
+        $result = $this->dashboardService->updateWidget($widgetId, $configuration);
         
         header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
+        echo json_encode($result);
     }
 }

@@ -2,13 +2,18 @@
 // File: app/Core/Helpers/csrf.php
 // Global helper functions for templates
 
+use App\Core\Container\ContainerFactory;
+use App\Core\Security\CsrfProtection;
+
 if (!function_exists('csrf_field')) {
     /**
      * Generate CSRF hidden field
      */
     function csrf_field(): string
     {
-        return \App\Core\Security\CsrfProtection::getHiddenField();
+        $container = ContainerFactory::getInstance();
+        $csrfProtection = $container->get(CsrfProtection::class);
+        return $csrfProtection->getHiddenField();
     }
 }
 
@@ -18,7 +23,9 @@ if (!function_exists('csrf_token')) {
      */
     function csrf_token(): string
     {
-        return \App\Core\Security\CsrfProtection::getToken();
+        $container = ContainerFactory::getInstance();
+        $csrfProtection = $container->get(CsrfProtection::class);
+        return $csrfProtection->getToken();
     }
 }
 
@@ -28,6 +35,8 @@ if (!function_exists('csrf_meta')) {
      */
     function csrf_meta(): string
     {
-        return \App\Core\Security\CsrfProtection::getMetaTag();
+        $container = ContainerFactory::getInstance();
+        $csrfProtection = $container->get(CsrfProtection::class);
+        return $csrfProtection->getMetaTag();
     }
 }

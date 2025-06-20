@@ -1,10 +1,10 @@
 <?php
-
-// File: app/Core/Layout/Components/Sidebar.php (Fixed class structure)
+// File: app/Core/Layout/Components/Sidebar.php
 namespace App\Core\Layout\Components;
+
 class Sidebar
 {
-    public static function render(array $data = []): void
+    public function render(array $data = []): void
     {
         ?>
         <aside id="sidebar"
@@ -15,53 +15,7 @@ class Sidebar
                 </div>
                 <div class="flex-1 overflow-y-auto px-3 space-y-1">
                     <?php
-                    $menuItems = [
-                        [
-                            'href' => '/dashboard',
-                            'icon' => 'fas fa-home',
-                            'label' => 'Dashboard',
-                            'active' => true,
-                            'badge' => ['text' => 'New', 'color' => 'indigo']
-                        ],
-                        [
-                            'icon' => 'fas fa-users',
-                            'label' => 'Employees',
-                            'dropdown' => [
-                                ['href' => '/employees', 'icon' => 'fas fa-list', 'label' => 'All Employees'],
-                                ['href' => '/employees/add', 'icon' => 'fas fa-user-plus', 'label' => 'Add Employee'],
-                                ['href' => '/departments', 'icon' => 'fas fa-sitemap', 'label' => 'Departments'],
-                            ]
-                        ],
-                        [
-                            'icon' => 'fas fa-clock',
-                            'label' => 'Attendance',
-                            'dropdown' => [
-                                ['href' => '/attendance/today', 'icon' => 'fas fa-calendar-check', 'label' => 'Today'],
-                                ['href' => '/attendance/history', 'icon' => 'fas fa-history', 'label' => 'History'],
-                            ]
-                        ],
-                        [
-                            'href' => '/leave',
-                            'icon' => 'fas fa-calendar-alt',
-                            'label' => 'Leave',
-                            'indicator' => 'orange'
-                        ],
-                        [
-                            'href' => '/payroll',
-                            'icon' => 'fas fa-money-check-alt',
-                            'label' => 'Payroll'
-                        ],
-                        [
-                            'href' => '/reports',
-                            'icon' => 'fas fa-chart-bar',
-                            'label' => 'Reports'
-                        ],
-                        [
-                            'href' => '/settings',
-                            'icon' => 'fas fa-cog',
-                            'label' => 'Settings'
-                        ],
-                    ];
+                    $menuItems = $this->getMenuItems();
                     
                     foreach ($menuItems as $item): 
                         if (isset($item['dropdown'])): ?>
@@ -109,5 +63,56 @@ class Sidebar
             </nav>
         </aside>
         <?php
+    }
+    
+    private function getMenuItems(): array
+    {
+        return [
+            [
+                'href' => '/dashboard',
+                'icon' => 'fas fa-home',
+                'label' => 'Dashboard',
+                'active' => true,
+                'badge' => ['text' => 'New', 'color' => 'indigo']
+            ],
+            [
+                'icon' => 'fas fa-users',
+                'label' => 'Employees',
+                'dropdown' => [
+                    ['href' => '/employees', 'icon' => 'fas fa-list', 'label' => 'All Employees'],
+                    ['href' => '/employees/add', 'icon' => 'fas fa-user-plus', 'label' => 'Add Employee'],
+                    ['href' => '/departments', 'icon' => 'fas fa-sitemap', 'label' => 'Departments'],
+                ]
+            ],
+            [
+                'icon' => 'fas fa-clock',
+                'label' => 'Attendance',
+                'dropdown' => [
+                    ['href' => '/attendance/today', 'icon' => 'fas fa-calendar-check', 'label' => 'Today'],
+                    ['href' => '/attendance/history', 'icon' => 'fas fa-history', 'label' => 'History'],
+                ]
+            ],
+            [
+                'href' => '/leave',
+                'icon' => 'fas fa-calendar-alt',
+                'label' => 'Leave',
+                'indicator' => 'orange'
+            ],
+            [
+                'href' => '/payroll',
+                'icon' => 'fas fa-money-check-alt',
+                'label' => 'Payroll'
+            ],
+            [
+                'href' => '/reports',
+                'icon' => 'fas fa-chart-bar',
+                'label' => 'Reports'
+            ],
+            [
+                'href' => '/settings',
+                'icon' => 'fas fa-cog',
+                'label' => 'Settings'
+            ],
+        ];
     }
 }

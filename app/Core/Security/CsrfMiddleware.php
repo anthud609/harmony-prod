@@ -1,17 +1,23 @@
 <?php
-
 // File: app/Core/Security/CsrfMiddleware.php
 namespace App\Core\Security;
 
 class CsrfMiddleware
 {
+    private CsrfProtection $csrfProtection;
+    
+    public function __construct(CsrfProtection $csrfProtection)
+    {
+        $this->csrfProtection = $csrfProtection;
+    }
+    
     /**
      * Handle CSRF verification for the request
      */
     public function handle(): void
     {
         try {
-            CsrfProtection::verifyRequest();
+            $this->csrfProtection->verifyRequest();
         } catch (CsrfException $e) {
             $this->handleCsrfFailure($e);
         }

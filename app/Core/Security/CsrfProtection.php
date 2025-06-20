@@ -12,24 +12,34 @@ class CsrfProtection
     private const MAX_TOKENS = 5; // Support multiple valid tokens for better UX
     private const TOKEN_LIFETIME = 3600; // 1 hour
     
+    private bool $initialized = false;
+    
     /**
      * Initialize CSRF protection
      */
-    public static function init(): void
+    public function init(): void
     {
+        if ($this->initialized) {
+            return;
+        }
+        
         if (!isset($_SESSION['csrf_tokens'])) {
             $_SESSION['csrf_tokens'] = [];
         }
         
         // Clean expired tokens
-        self::cleanExpiredTokens();
+        $this->cleanExpiredTokens();
+        
+        $this->initialized = true;
     }
     
     /**
      * Generate a new CSRF token
      */
-    public static function generateToken(): string
+    public function generateToken(): string
     {
+        $this->init();
+        
         $token = bin2hex(random_bytes(self::TOKEN_LENGTH));
         $timestamp = time();
         
@@ -50,32 +60,32 @@ class CsrfProtection
     /**
      * Get the current CSRF token (generates if none exists)
      */
-    public static function getToken(): string
+    public function getToken(): string
     {
-        self::init();
+        $this->init();
         
         // Return the most recent valid token or generate a new one
         $tokens = $_SESSION['csrf_tokens'] ?? [];
         if (!empty($tokens)) {
             $latestToken = end($tokens);
-            if (self::isTokenValid($latestToken)) {
+            if ($this->isTokenValid($latestToken)) {
                 return $latestToken['token'];
             }
         }
         
-        return self::generateToken();
+        return $this->generateToken();
     }
     
     /**
      * Verify CSRF token from request
      */
-    public static function verifyToken(string $token = null): bool
+    public function verifyToken(string $token = null): bool
     {
-        self::init();
+        $this->init();
         
         // Get token from various sources
         if ($token === null) {
-            $token = self::getTokenFromRequest();
+            $token = $this->getTokenFromRequest();
         }
         
         if (empty($token)) {
@@ -84,7 +94,7 @@ class CsrfProtection
         
         // Check against all valid tokens
         foreach ($_SESSION['csrf_tokens'] ?? [] as $storedToken) {
-            if (self::isTokenValid($storedToken) && 
+            if ($this->isTokenValid($storedToken) && 
                 hash_equals($storedToken['token'], $token)) {
                 return true;
             }
@@ -96,14 +106,14 @@ class CsrfProtection
     /**
      * Verify request or throw exception
      */
-    public static function verifyRequest(): void
+    public function verifyRequest(): void
     {
         // Skip CSRF check for safe methods
         if (in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD', 'OPTIONS'])) {
             return;
         }
         
-        if (!self::verifyToken()) {
+        if (!$this->verifyToken()) {
             throw new CsrfException('Invalid or missing CSRF token');
         }
     }
@@ -111,9 +121,9 @@ class CsrfProtection
     /**
      * Get HTML input field with CSRF token
      */
-    public static function getHiddenField(): string
+    public function getHiddenField(): string
     {
-        $token = self::getToken();
+        $token = $this->getToken();
         return sprintf(
             '<input type="hidden" name="%s" value="%s" />',
             htmlspecialchars(self::TOKEN_NAME),
@@ -124,9 +134,9 @@ class CsrfProtection
     /**
      * Get meta tag for AJAX requests
      */
-    public static function getMetaTag(): string
+    public function getMetaTag(): string
     {
-        $token = self::getToken();
+        $token = $this->getToken();
         return sprintf(
             '<meta name="%s" content="%s" />',
             htmlspecialchars(self::TOKEN_NAME),
@@ -137,7 +147,7 @@ class CsrfProtection
     /**
      * Get token from request (POST body, header, or query)
      */
-    private static function getTokenFromRequest(): ?string
+    private function getTokenFromRequest(): ?string
     {
         // Check POST data
         if (isset($_POST[self::TOKEN_NAME])) {
@@ -163,7 +173,7 @@ class CsrfProtection
     /**
      * Clean expired tokens
      */
-    private static function cleanExpiredTokens(): void
+    private function cleanExpiredTokens(): void
     {
         if (!isset($_SESSION['csrf_tokens'])) {
             return;
@@ -171,14 +181,14 @@ class CsrfProtection
         
         $_SESSION['csrf_tokens'] = array_values(array_filter(
             $_SESSION['csrf_tokens'],
-            [self::class, 'isTokenValid']
+            [$this, 'isTokenValid']
         ));
     }
     
     /**
      * Check if token is still valid
      */
-    private static function isTokenValid(array $tokenData): bool
+    private function isTokenValid(array $tokenData): bool
     {
         return isset($tokenData['created']) && 
                (time() - $tokenData['created']) < self::TOKEN_LIFETIME;
