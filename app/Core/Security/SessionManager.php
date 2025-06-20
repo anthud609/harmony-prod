@@ -4,7 +4,7 @@ namespace App\Core\Security;
 
 class SessionManager
 {
-    private const SESSION_LIFETIME = 3600; // 1 hour
+    private const SESSION_LIFETIME = 3600; // 6 minutes (5 min activity + 1 min warning)
     private const SESSION_NAME = 'HARMONY_SESSID';
     private const FINGERPRINT_KEY = '_session_fingerprint';
     private const LAST_ACTIVITY_KEY = '_last_activity';
