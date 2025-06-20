@@ -64,6 +64,19 @@
 
             <!-- Main login card -->
             <div class="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 animate-slide-up">
+                <!-- Show PHP error message if exists -->
+                <?php if (isset($_SESSION['flash_error'])): ?>
+                <div class="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm animate-shake">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <span><?= htmlspecialchars($_SESSION['flash_error']) ?></span>
+                    </div>
+                </div>
+                <?php unset($_SESSION['flash_error']); ?>
+                <?php endif; ?>
+
                 <!-- Auth method toggle -->
                 <div class="flex mb-4 sm:mb-6 bg-white/5 rounded-2xl p-1" id="authToggle">
                     <button class="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 text-white bg-white/20" data-method="credentials">
@@ -75,19 +88,19 @@
                 </div>
 
                 <!-- Credentials Login Form -->
-                <form id="credentialsForm" class="space-y-4 sm:space-y-6">
-                    <!-- Email field -->
+                <form id="credentialsForm" class="space-y-4 sm:space-y-6" method="POST" action="/login">
+                    <!-- Username field (changed from email to match PHP backend) -->
                     <div class="relative">
-                        <label class="block text-sm font-medium text-white/90 mb-2">Email Address</label>
+                        <label class="block text-sm font-medium text-white/90 mb-2">Username / Email</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                 </svg>
                             </div>
-                            <input type="email" name="email" id="email" required 
+                            <input type="text" name="username" id="username" required 
                                    class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all duration-300"
-                                   placeholder="Enter your email address" autofocus>
+                                   placeholder="Enter username or email" autofocus>
                         </div>
                     </div>
 
@@ -154,14 +167,10 @@
                     </button>
                 </div>
 
-                <!-- Error message -->
-                <div id="errorMessage" class="hidden mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm animate-shake">
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                        <span id="errorText">Invalid credentials. Please try again.</span>
-                    </div>
+                <!-- Demo credentials info -->
+                <div class="mt-4 text-center text-white/60 text-xs">
+                    <p>Demo users: alice_admin@email.com | bob_editor | charlie_user</p>
+                    <p>Password: secret</p>
                 </div>
             </div>
 
@@ -199,62 +208,12 @@
         </div>
     </div>
 
-    <!-- MFA Verification Modal -->
-    <div id="mfaModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-8 w-full max-w-md animate-slide-up">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4">
-                    <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h2>
-                <p class="text-white/70 text-sm">Enter the 6-digit code from your authenticator app</p>
-            </div>
-            <form id="mfaForm" class="space-y-6">
-                <div class="flex justify-center space-x-3">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 0)">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 1)">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 2)">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 3)">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 4)">
-                    <input type="text" maxlength="1" class="w-12 h-12 text-center bg-white/10 border border-white/20 rounded-xl text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" onkeyup="moveFocus(this, 5)">
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="closeMFA()" class="flex-1 py-3 px-4 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-all duration-300">
-                        Cancel
-                    </button>
-                    <button type="submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300">
-                        Verify
-                    </button>
-                </div>
-            </form>
-            <div class="mt-4 text-center">
-                <button type="button" onclick="resendMFA()" class="text-sm text-white/60 hover:text-white/80 transition-colors">
-                    Didn't receive code? Resend
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success notification -->
-    <div id="successNotification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden animate-slide-up z-50">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span id="successText">Success!</span>
-        </div>
-    </div>
-
     <script>
         let currentAuthMethod = 'credentials';
-        let isLoading = false;
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            simulateLoadingState();
         });
 
         function setupEventListeners() {
@@ -263,19 +222,8 @@
                 button.addEventListener('click', () => switchAuthMethod(button.dataset.method));
             });
 
-            // Forms
-            document.getElementById('credentialsForm').addEventListener('submit', handleCredentialsLogin);
+            // Forgot password form
             document.getElementById('forgotPasswordForm').addEventListener('submit', handleForgotPassword);
-            document.getElementById('mfaForm').addEventListener('submit', handleMFAVerification);
-
-            // Keyboard navigation for MFA inputs
-            document.querySelectorAll('#mfaForm input').forEach((input, index) => {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && !input.value && index > 0) {
-                        document.querySelectorAll('#mfaForm input')[index - 1].focus();
-                    }
-                });
-            });
         }
 
         function switchAuthMethod(method) {
@@ -320,62 +268,6 @@
             }
         }
 
-        async function handleCredentialsLogin(e) {
-            e.preventDefault();
-            if (isLoading) return;
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            setLoading(true);
-            hideError();
-
-            try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1500));
-
-                // Simulate different scenarios
-                const random = Math.random();
-                
-                if (email === 'admin@harmony.com' && password === 'admin123') {
-                    // Simulate MFA requirement
-                    setLoading(false);
-                    showMFA();
-                } else if (email.includes('@') && password.length >= 6) {
-                    // Simulate successful login
-                    setLoading(false);
-                    showSuccess('Login successful! Redirecting...');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 2000);
-                } else {
-                    // Simulate error
-                    setLoading(false);
-                    showError('Invalid email or password. Please try again.');
-                }
-            } catch (error) {
-                setLoading(false);
-                showError('An error occurred. Please try again.');
-            }
-        }
-
-        async function handleSSOLogin(provider) {
-            if (isLoading) return;
-            
-            setLoading(true);
-            showSuccess(`Redirecting to ${provider} login...`);
-            
-            // Simulate SSO redirect
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // In a real app, this would redirect to the SSO provider
-            setLoading(false);
-            showSuccess('SSO login successful! Redirecting...');
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 2000);
-        }
-
         function showForgotPassword() {
             document.getElementById('forgotPasswordModal').classList.remove('hidden');
         }
@@ -391,140 +283,14 @@
             
             if (!email) return;
 
-            // Simulate sending reset email
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            // For demo purposes only
+            alert('Password reset functionality not implemented in demo');
             closeForgotPassword();
-            showSuccess('Password reset link sent to your email!');
         }
 
-        function showMFA() {
-            document.getElementById('mfaModal').classList.remove('hidden');
-            // Focus first input
-            document.querySelector('#mfaForm input').focus();
+        async function handleSSOLogin(provider) {
+            alert(`${provider} SSO not implemented in this demo`);
         }
-
-        function closeMFA() {
-            document.getElementById('mfaModal').classList.add('hidden');
-            // Clear inputs
-            document.querySelectorAll('#mfaForm input').forEach(input => input.value = '');
-        }
-
-        function moveFocus(element, index) {
-            if (element.value.length === 1 && index < 5) {
-                document.querySelectorAll('#mfaForm input')[index + 1].focus();
-            }
-            
-            // Auto-submit when all fields are filled
-            const inputs = document.querySelectorAll('#mfaForm input');
-            const allFilled = Array.from(inputs).every(input => input.value.length === 1);
-            if (allFilled) {
-                setTimeout(() => {
-                    document.getElementById('mfaForm').dispatchEvent(new Event('submit'));
-                }, 500);
-            }
-        }
-
-        async function handleMFAVerification(e) {
-            e.preventDefault();
-            
-            const inputs = document.querySelectorAll('#mfaForm input');
-            const code = Array.from(inputs).map(input => input.value).join('');
-            
-            if (code.length !== 6) return;
-
-            // Simulate MFA verification
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Accept any 6-digit code for demo
-            if (code.length === 6) {
-                closeMFA();
-                showSuccess('Authentication successful! Redirecting...');
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            } else {
-                showError('Invalid verification code. Please try again.');
-            }
-        }
-
-        async function resendMFA() {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            showSuccess('New verification code sent!');
-        }
-
-        function setLoading(loading) {
-            isLoading = loading;
-            const submitBtn = document.querySelector('#credentialsForm button[type="submit"]');
-            
-            if (loading) {
-                submitBtn.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing In...
-                `;
-                submitBtn.disabled = true;
-            } else {
-                submitBtn.innerHTML = 'Sign In';
-                submitBtn.disabled = false;
-            }
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            
-            errorText.textContent = message;
-            errorDiv.classList.remove('hidden');
-            errorDiv.classList.add('animate-shake');
-            
-            setTimeout(() => {
-                errorDiv.classList.remove('animate-shake');
-            }, 500);
-        }
-
-        function hideError() {
-            document.getElementById('errorMessage').classList.add('hidden');
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successNotification');
-            const successText = document.getElementById('successText');
-            
-            successText.textContent = message;
-            successDiv.classList.remove('hidden');
-            
-            setTimeout(() => {
-                successDiv.classList.add('hidden');
-            }, 4000);
-        }
-
-        function simulateLoadingState() {
-            // Add some initial loading animations
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                document.body.style.transition = 'opacity 0.5s ease-in-out';
-            }, 100);
-        }
-
-        // Add some interactive hover effects
-        document.addEventListener('mousemove', (e) => {
-            const cards = document.querySelectorAll('.bg-white\\/10');
-            cards.forEach(card => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
-            });
-        });
-
-        // Demo credentials helper
-        console.log('Demo credentials: admin@harmony.com / admin123 (triggers MFA)');
-        console.log('Any other valid email/password combination will simulate successful login');
     </script>
 </body>
 </html>

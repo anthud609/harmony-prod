@@ -5,11 +5,19 @@ session_start();
 use App\Modules\IAM\Controllers\AuthController;
 use App\Core\Dashboard\Controllers\DashboardController;
 
-// (re)register your autoloader if needed—Composer should already handle it.
-
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// simple router map → [ ControllerClass, method ]
+// ──────────────────────────────────────────────────────────────────────────
+// If already logged in, redirect any “/” or “/login” request to /dashboard
+// ──────────────────────────────────────────────────────────────────────────
+if (isset($_SESSION['user']) && in_array($requestPath, ['/', '/login'], true)) {
+    header('Location: /dashboard');
+    exit;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Route definitions
+// ──────────────────────────────────────────────────────────────────────────
 $routes = [
     '/'           => [AuthController::class,    'showLogin'],
     '/login'      => [AuthController::class,    'showLogin'],
@@ -23,13 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestPath === '/login') {
     $requestPath = '/login.post';
 }
 
-// guard
-if ($requestPath !== '/login' && $requestPath !== '/login.post' && !isset($_SESSION['user'])) {
+// ──────────────────────────────────────────────────────────────────────────
+// Auth guard: everything except login routes requires a user
+// ──────────────────────────────────────────────────────────────────────────
+if (!in_array($requestPath, ['/login', '/login.post'], true) && !isset($_SESSION['user'])) {
     header('Location: /login');
     exit;
 }
 
-// dispatch
+// ──────────────────────────────────────────────────────────────────────────
+// Dispatch
+// ──────────────────────────────────────────────────────────────────────────
 if (isset($routes[$requestPath])) {
     [$class, $method] = $routes[$requestPath];
     (new $class)->{$method}();

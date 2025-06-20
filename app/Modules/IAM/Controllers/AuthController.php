@@ -14,8 +14,8 @@ class AuthController
         // VERY basic “demo” check — swap in your real user lookup here
         $users = [
             'alice_admin@email.com'  => ['password' => 'secret', 'role' => 'admin'],
-            'bob_editor'   => ['password' => 'secret', 'role' => 'editor'],
-            'charlie_user' => ['password' => 'secret', 'role' => 'user'],
+            'bob_editor@email.com'   => ['password' => 'secret', 'role' => 'editor'],
+            'charlie_user@email.com' => ['password' => 'secret', 'role' => 'user'],
         ];
 
         $username = $_POST['username'] ?? '';
