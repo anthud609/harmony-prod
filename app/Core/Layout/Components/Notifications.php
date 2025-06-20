@@ -1,13 +1,17 @@
 <?php
-
-// File: 
+// File: app/Core/Layout/Components/Notifications.php
 namespace App\Core\Layout\Components;
 
 class Notifications
 {
-    public static function renderDropdown(array $data = []): void
+    public function render(array $data = []): void
     {
-        $notifications = self::getNotifications($data);
+        $this->renderDropdown($data);
+    }
+    
+    public function renderDropdown(array $data = []): void
+    {
+        $notifications = $this->getNotifications($data);
         $unreadCount = $data['user']['notificationCount'] ?? count(array_filter($notifications, fn($n) => !$n['read']));
         ?>
         <!-- Notifications -->
@@ -31,7 +35,7 @@ class Notifications
                 </div>
                 <div class="max-h-96 overflow-y-auto">
                     <?php foreach ($notifications as $notification): ?>
-                    <?php self::renderNotificationItem($notification); ?>
+                    <?php $this->renderNotificationItem($notification); ?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -39,7 +43,7 @@ class Notifications
         <?php
     }
 
-    private static function renderNotificationItem(array $notification): void
+    private function renderNotificationItem(array $notification): void
     {
         ?>
         <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 <?= !$notification['read'] ? 'bg-blue-50 dark:bg-blue-900/20' : '' ?>">
@@ -58,7 +62,7 @@ class Notifications
         <?php
     }
 
-    private static function getNotifications(array $data): array
+    private function getNotifications(array $data): array
     {
         // In a real app, this would come from database
         return [

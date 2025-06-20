@@ -4,9 +4,14 @@ namespace App\Core\Layout\Components;
 
 class Messages
 {
-    public static function renderDropdown(array $data = []): void
+    public function render(array $data = []): void
     {
-        $messages = self::getMessages($data);
+        $this->renderDropdown($data);
+    }
+    
+    public function renderDropdown(array $data = []): void
+    {
+        $messages = $this->getMessages($data);
         $unreadCount = $data['user']['messageCount'] ?? count(array_filter($messages, fn($m) => !$m['read']));
         ?>
         <!-- Messages -->
@@ -30,7 +35,7 @@ class Messages
                 </div>
                 <div class="max-h-96 overflow-y-auto">
                     <?php foreach ($messages as $message): ?>
-                    <?php self::renderMessageItem($message); ?>
+                    <?php $this->renderMessageItem($message); ?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -38,7 +43,7 @@ class Messages
         <?php
     }
 
-    private static function renderMessageItem(array $message): void
+    private function renderMessageItem(array $message): void
     {
         ?>
         <a href="<?= $message['url'] ?? '#' ?>" 
@@ -57,7 +62,7 @@ class Messages
         <?php
     }
 
-    private static function getMessages(array $data): array
+    private function getMessages(array $data): array
     {
         // In a real app, this would come from database
         return [

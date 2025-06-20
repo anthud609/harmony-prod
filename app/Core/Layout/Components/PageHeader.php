@@ -4,7 +4,7 @@ namespace App\Core\Layout\Components;
 
 class PageHeader
 {
-    public static function render(array $data = []): void
+    public function render(array $data = []): void
     {
         $title = $data['pageTitle'] ?? $data['title'] ?? 'Untitled Page';
         $description = $data['pageDescription'] ?? '';

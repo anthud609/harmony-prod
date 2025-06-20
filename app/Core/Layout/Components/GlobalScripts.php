@@ -1,10 +1,10 @@
 <?php
-// File: 
+// File: app/Core/Layout/Components/GlobalScripts.php
 namespace App\Core\Layout\Components;
 
 class GlobalScripts
 {
-    public static function render(): void
+    public function render(): void
     {
         ?>
         <script>

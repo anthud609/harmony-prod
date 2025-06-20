@@ -1,11 +1,10 @@
 <?php
-
 // File: app/Core/Layout/Components/CommandPalette.php
 namespace App\Core\Layout\Components;
 
 class CommandPalette
 {
-    public static function render(array $data = []): void
+    public function render(array $data = []): void
     {
         ?>
         <!-- Command Palette Overlay -->
@@ -31,7 +30,7 @@ class CommandPalette
                     
                     <!-- Results -->
                     <div id="commandResults" class="max-h-[60vh] overflow-y-auto">
-                        <?php self::renderDefaultResults($data); ?>
+                        <?php $this->renderDefaultResults($data); ?>
                     </div>
                     
                     <!-- Footer -->
@@ -70,13 +69,13 @@ class CommandPalette
         <?php
     }
 
-    private static function renderDefaultResults(array $data): void
+    private function renderDefaultResults(array $data): void
     {
         ?>
         <!-- Quick Actions -->
         <div class="p-2">
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Actions</p>
-            <?php foreach (self::getQuickActions() as $action): ?>
+            <?php foreach ($this->getQuickActions() as $action): ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
                     data-action="<?= $action['action'] ?>">
                 <div class="w-10 h-10 bg-<?= $action['color'] ?>-100 dark:bg-<?= $action['color'] ?>-900 rounded-lg flex items-center justify-center mr-3">
@@ -96,7 +95,7 @@ class CommandPalette
         <!-- Recent Searches -->
         <div class="p-2 border-t border-gray-200 dark:border-gray-700">
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent</p>
-            <?php foreach (self::getRecentSearches($data) as $search): ?>
+            <?php foreach ($this->getRecentSearches($data) as $search): ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
                     data-search="<?= htmlspecialchars($search['query']) ?>">
                 <i class="fas fa-clock text-gray-400 dark:text-gray-500 mr-3"></i>
@@ -112,7 +111,7 @@ class CommandPalette
         <?php
     }
 
-    private static function getQuickActions(): array
+    private function getQuickActions(): array
     {
         return [
             [
@@ -134,7 +133,7 @@ class CommandPalette
         ];
     }
 
-    private static function getRecentSearches(array $data): array
+    private function getRecentSearches(array $data): array
     {
         // In a real app, this would come from user session or database
         return [

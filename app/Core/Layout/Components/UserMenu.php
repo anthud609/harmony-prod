@@ -4,7 +4,7 @@ namespace App\Core\Layout\Components;
 
 class UserMenu
 {
-    public static function render(array $data = []): void
+    public function render(array $data = []): void
     {
         $user = $data['user'] ?? [];
         ?>
