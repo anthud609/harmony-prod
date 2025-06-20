@@ -1,9 +1,10 @@
 <?php
-// File: app/Core/Container/Providers/LayoutServiceProvider.php
+// File: app/Core/Container/Providers/LayoutServiceProvider.php (Updated)
 namespace App\Core\Container\Providers;
 
 use App\Core\Container\ServiceProviderInterface;
 use App\Core\Layout\LayoutManager;
+use App\Core\Layout\ComponentRegistry;
 use App\Core\Layout\Components\Header;
 use App\Core\Layout\Components\Sidebar;
 use App\Core\Layout\Components\Scripts;
@@ -20,17 +21,36 @@ class LayoutServiceProvider implements ServiceProviderInterface
     public function getDefinitions(): array
     {
         return [
+            // Component Registry - now configurable and extensible
+            ComponentRegistry::class => \DI\factory(function ($container) {
+                $registry = new ComponentRegistry($container);
+                
+                // Register core components
+                $registry->registerMany([
+                    'header' => Header::class,
+                    'sidebar' => Sidebar::class,
+                    'scripts' => Scripts::class,
+                    'userMenu' => UserMenu::class,
+                    'messages' => Messages::class,
+                    'notifications' => Notifications::class,
+                    'commandPalette' => CommandPalette::class,
+                    'globalScripts' => GlobalScripts::class,
+                    'pageHeader' => PageHeader::class,
+                ]);
+                
+                // Register aliases for convenience
+                $registry->alias('nav', 'sidebar');
+                $registry->alias('js', 'scripts');
+                
+                return $registry;
+            }),
+            
             // Layout Manager with dependencies
             LayoutManager::class => \DI\autowire()
                 ->constructorParameter('sessionManager', \DI\get(SessionManager::class))
-                ->constructorParameter('componentFactory', \DI\get('layout.component.factory')),
+                ->constructorParameter('componentRegistry', \DI\get(ComponentRegistry::class)),
             
-            // Component Factory
-            'layout.component.factory' => \DI\factory(function ($container) {
-                return new \App\Core\Layout\ComponentFactory($container);
-            }),
-            
-            // Register all components
+            // Register all components (unchanged)
             Header::class => \DI\autowire()
                 ->constructorParameter('messages', \DI\get(Messages::class))
                 ->constructorParameter('notifications', \DI\get(Notifications::class))
