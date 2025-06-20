@@ -1,6 +1,13 @@
 <?php
 
-// File: app/Core/Routing/Router.php (Updated to work with Request/Response)
+// =============================================================================
+// File: app/Core/Api/Controllers/HealthCheckController.php (ALREADY CORRECT)
+// =============================================================================
+// This controller already returns Response objects properly
+
+// =============================================================================
+// File: app/Core/Routing/Router.php (UPDATED)
+// =============================================================================
 
 namespace App\Core\Routing;
 
@@ -21,7 +28,6 @@ class Router
     public function add(string $path, array $handler): self
     {
         $this->routes[$path] = $handler;
-
         return $this;
     }
 
@@ -30,7 +36,6 @@ class Router
         foreach ($routes as $path => $handler) {
             $this->add($path, $handler);
         }
-
         return $this;
     }
 
@@ -44,7 +49,7 @@ class Router
             $path = '/login.post';
         }
 
-        if (! isset($this->routes[$path])) {
+        if (!isset($this->routes[$path])) {
             return $this->handleNotFound();
         }
 
@@ -53,27 +58,33 @@ class Router
         // Get controller instance from container
         $controller = $this->container->get($controllerClass);
 
-        // Check if controller method expects Request/Response pattern
+        // ALL controllers must now return Response objects
+        // Check if method accepts Request parameter
         $reflection = new \ReflectionMethod($controller, $actionMethod);
         $parameters = $reflection->getParameters();
 
-        if (
-            ! empty($parameters) && $parameters[0]->getType() &&
-            $parameters[0]->getType()->getName() === Request::class
-        ) {
-            // New clean controllers that accept Request and return Response
-            return $controller->{$actionMethod}($request);
+        if (!empty($parameters) && $parameters[0]->getType() && 
+            $parameters[0]->getType()->getName() === Request::class) {
+            // New controllers that accept Request and return Response
+            $response = $controller->{$actionMethod}($request);
         } else {
-            // Legacy controllers - wrap their output
-            ob_start();
-            $controller->{$actionMethod}();
-            $content = ob_get_clean();
-
-            $response = new Response();
-            $response->setContent($content);
-
-            return $response;
+            // Legacy controllers - call without Request but still expect Response
+            $response = $controller->{$actionMethod}();
         }
+
+        // Ensure we got a Response object
+        if (!($response instanceof Response)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Controller %s::%s must return a Response object, got %s',
+                    $controllerClass,
+                    $actionMethod,
+                    is_object($response) ? get_class($response) : gettype($response)
+                )
+            );
+        }
+
+        return $response;
     }
 
     private function handleNotFound(): Response

@@ -16,8 +16,8 @@ if (!function_exists('e')) {
             return '';
         }
 
-        // Always use these specific flags for consistency
-        return e(
+        // FIXED: Call htmlspecialchars, not e() recursively
+        return htmlspecialchars(
             (string)$value, 
             ENT_QUOTES | ENT_HTML5 | ENT_SUBSTITUTE,
             'UTF-8',

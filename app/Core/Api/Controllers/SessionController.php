@@ -1,9 +1,12 @@
 <?php
-
-// File: app/Core/Api/Controllers/SessionController.php
+// =============================================================================
+// File: app/Core/Api/Controllers/SessionController.php (FIXED)
+// =============================================================================
 
 namespace App\Core\Api\Controllers;
 
+use App\Core\Http\Request;
+use App\Core\Http\Response;
 use App\Core\Security\SessionManager;
 use App\Core\Traits\LoggerTrait;
 
@@ -18,13 +21,8 @@ class SessionController
         $this->sessionManager = $sessionManager;
     }
 
-    /**
-     * Get session status (for AJAX)
-     */
-    public function status(): void
+    public function status(Request $request): Response
     {
-        header('Content-Type: application/json');
-
         $sessionId = session_id();
         $hasUser = $this->sessionManager->has('user');
 
@@ -34,14 +32,13 @@ class SessionController
             'sessionData' => array_keys($_SESSION ?? []),
         ]);
 
-        if (! $this->sessionManager->isLoggedIn()) {
+        if (!$this->sessionManager->isLoggedIn()) {
             $this->logInfo('Session status check - user not logged in', [
                 'sessionId' => $sessionId,
                 'reason' => 'no_user_in_session',
             ]);
-            http_response_code(401);
-            echo json_encode(['error' => 'Not authenticated']);
-            exit;
+            
+            return (new Response())->json(['error' => 'Not authenticated'], 401);
         }
 
         $remainingTime = $this->sessionManager->getRemainingLifetime();
@@ -50,7 +47,6 @@ class SessionController
         $currentTime = time();
         $elapsedTime = $lastActivity ? ($currentTime - $lastActivity) : 0;
 
-        // Log detailed timing information
         $this->logInfo('Session status - timing details', [
             'username' => $user['username'] ?? 'unknown',
             'remainingTime' => $remainingTime,
@@ -62,7 +58,6 @@ class SessionController
             'shouldShowWarning' => ($remainingTime <= 60 && $remainingTime > 0),
         ]);
 
-        // Additional debug info for troubleshooting
         if ($remainingTime <= 0) {
             $this->logWarning('Session has expired', [
                 'username' => $user['username'] ?? 'unknown',
@@ -92,26 +87,19 @@ class SessionController
 
         $this->logDebug('Session status response', $response);
 
-        echo json_encode($response);
+        return (new Response())->json($response);
     }
 
-    /**
-     * Extend session lifetime
-     */
-    public function extend(): void
+    public function extend(Request $request): Response
     {
-        header('Content-Type: application/json');
-
         $this->logInfo('Session extend request received', [
             'sessionId' => session_id(),
             'user' => $this->sessionManager->get('user')['username'] ?? 'unknown',
         ]);
 
-        if (! $this->sessionManager->isLoggedIn()) {
+        if (!$this->sessionManager->isLoggedIn()) {
             $this->logWarning('Session extend failed - user not logged in');
-            http_response_code(401);
-            echo json_encode(['error' => 'Not authenticated']);
-            exit;
+            return (new Response())->json(['error' => 'Not authenticated'], 401);
         }
 
         // Get before and after times for logging
@@ -133,7 +121,7 @@ class SessionController
             'extended' => ($afterExtend > $beforeExtend),
         ]);
 
-        echo json_encode([
+        return (new Response())->json([
             'success' => true,
             'remainingTime' => $afterExtend,
             'lastActivity' => $afterActivity,

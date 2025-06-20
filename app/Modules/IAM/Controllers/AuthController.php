@@ -1,9 +1,10 @@
 <?php
-
-// File: app/Modules/IAM/Controllers/AuthController.php
+// File: app/Modules/IAM/Controllers/AuthController.php (FIXED)
 
 namespace App\Modules\IAM\Controllers;
 
+use App\Core\Http\Request;
+use App\Core\Http\Response;
 use App\Core\Security\SessionManager;
 use App\Modules\IAM\Services\AuthService;
 
@@ -20,73 +21,70 @@ class AuthController
         $this->authService = $authService;
     }
 
-    public function showLogin(): void
+    public function showLogin(Request $request): Response
     {
-        // simply render the login form
+        // Capture view output
+        ob_start();
         require __DIR__ . '/../Views/login.php';
+        $content = ob_get_clean();
+
+        return (new Response())
+            ->setStatusCode(200)
+            ->setHeader('Content-Type', 'text/html')
+            ->setContent($content);
     }
 
-    public function login(): void
+    public function login(Request $request): Response
     {
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $username = $request->getPost('username', '');
+        $password = $request->getPost('password', '');
 
         $user = $this->authService->authenticate($username, $password);
 
         if ($user !== null) {
-            // CRITICAL: Regenerate session ID to prevent session fixation
+            // Regenerate session ID to prevent session fixation
             $this->sessionManager->regenerate(true);
 
             // Set user data in session
             $this->sessionManager->set('user', $user);
-
-            // Set theme preference in session for immediate use
             $this->sessionManager->set('theme', $user['preferredTheme']);
 
             // Log successful login
             $this->authService->logSuccessfulLogin($username);
 
-            header('Location: /dashboard');
-            exit;
+            return (new Response())->redirect('/dashboard');
         }
 
         // Log failed login attempt
         $this->authService->logFailedLogin($username);
 
-        // on failure, back to login with an error
+        // Set error message and redirect
         $this->sessionManager->set('flash_error', 'Invalid credentials.');
-        header('Location: /login');
-        exit;
+        return (new Response())->redirect('/login');
     }
 
-    public function logout(): void
+    public function logout(Request $request): Response
     {
         // Get user info before destroying session
         $user = $this->sessionManager->get('user');
 
         if ($user) {
-            // Log logout
             $this->authService->logLogout($user['username'] ?? 'unknown');
         }
 
         // Securely destroy session
         $this->sessionManager->destroy();
 
-        header('Location: /login');
-        exit;
+        return (new Response())->redirect('/login');
     }
 
-    /**
-     * Update user preferences (e.g., theme)
-     */
-    public function updatePreferences(): void
+    public function updatePreferences(Request $request): Response
     {
-        if (! $this->sessionManager->has('user')) {
-            header('Location: /login');
-            exit;
+        if (!$this->sessionManager->has('user')) {
+            return (new Response())->redirect('/login');
         }
 
-        $theme = $_POST['theme'] ?? 'system';
+        $theme = $request->getPost('theme', 'system');
 
         // Validate and update theme
         if ($this->authService->updateThemePreference($theme)) {
@@ -97,25 +95,19 @@ class AuthController
         }
 
         // Return JSON response for AJAX requests
-        if ($this->isAjaxRequest()) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'theme' => $theme]);
-            exit;
+        if ($this->isAjaxRequest($request)) {
+            return (new Response())->json(['success' => true, 'theme' => $theme]);
         }
 
         // Otherwise redirect back
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/dashboard'));
-        exit;
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/dashboard';
+        return (new Response())->redirect($referer);
     }
 
-    /**
-     * Mark notifications as read
-     */
-    public function markNotificationsRead(): void
+    public function markNotificationsRead(Request $request): Response
     {
-        if (! $this->sessionManager->has('user')) {
-            header('Location: /login');
-            exit;
+        if (!$this->sessionManager->has('user')) {
+            return (new Response())->json(['error' => 'Not authenticated'], 401);
         }
 
         // Reset notification count
@@ -126,15 +118,12 @@ class AuthController
         // In a real application, you would update this in database
         $this->authService->markAllNotificationsRead($user['id']);
 
-        // Return JSON response
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'count' => 0]);
-        exit;
+        return (new Response())->json(['success' => true, 'count' => 0]);
     }
 
-    private function isAjaxRequest(): bool
+    private function isAjaxRequest(Request $request): bool
     {
-        return ! empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 }
