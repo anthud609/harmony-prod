@@ -1,3 +1,4 @@
+<?php
 // File: app/Core/Layout/LayoutManager.php (Refactored)
 namespace App\Core\Layout;
 

@@ -1,4 +1,166 @@
-// File: app/Core/Layout/Layouts/MainLayout.php
+<?php
+// File: app/Core/Layout/LayoutRenderer.php (UPDATED)
+namespace App\Core\Layout;
+
+/**
+ * Responsible for rendering layouts with their content
+ */
+class LayoutRenderer
+{
+    private ViewRenderer $viewRenderer;
+    private string $layoutsPath;
+    
+    public function __construct(ViewRenderer $viewRenderer, string $layoutsPath = null)
+    {
+        $this->viewRenderer = $viewRenderer;
+        $this->layoutsPath = $layoutsPath ?? __DIR__ . '/Layouts';
+    }
+    
+    /**
+     * Render a layout with content
+     * Pass the layout manager instance so components can be rendered
+     */
+    public function renderWithLayout(string $layout, string $content, array $data = [], ?LayoutManager $layoutManager = null): string
+    {
+        $layoutFile = $this->layoutsPath . '/' . ucfirst($layout) . 'Layout.php';
+        
+        if (!file_exists($layoutFile)) {
+            throw new \RuntimeException("Layout file not found: {$layoutFile}");
+        }
+        
+        // Add content and layout manager to data
+        $data['content'] = $content;
+        $data['layoutManager'] = $layoutManager;
+        
+        return $this->viewRenderer->render($layoutFile, $data);
+    }
+    
+    /**
+     * Display a layout with content
+     */
+    public function displayWithLayout(string $layout, string $content, array $data = [], ?LayoutManager $layoutManager = null): void
+    {
+        echo $this->renderWithLayout($layout, $content, $data, $layoutManager);
+    }
+}
+
+// File: app/Core/Layout/LayoutManager.php (UPDATED render method)
+namespace App\Core\Layout;
+
+use App\Core\Security\SessionManager;
+
+/**
+ * Refactored LayoutManager - now acts as a facade/coordinator
+ * instead of a God Object
+ */
+class LayoutManager
+{
+    private ViewRenderer $viewRenderer;
+    private ViewDataContainer $dataContainer;
+    private LayoutRenderer $layoutRenderer;
+    private ComponentRenderer $componentRenderer;
+    private string $currentLayout = 'main';
+    
+    public function __construct(
+        SessionManager $sessionManager,
+        ComponentRegistry $componentRegistry
+    ) {
+        // Initialize sub-components
+        $this->viewRenderer = new ViewRenderer();
+        $this->layoutRenderer = new LayoutRenderer($this->viewRenderer);
+        $this->componentRenderer = new ComponentRenderer($componentRegistry);
+        
+        // Initialize data container with defaults
+        $this->dataContainer = new ViewDataContainer([
+            'title' => 'Harmony HRMS',
+            'user' => $sessionManager->getUser(),
+            'breadcrumbs' => [],
+            'pageActions' => [],
+            'pageDescription' => '',
+            'helpLink' => '#'
+        ]);
+    }
+    
+    /**
+     * Set the layout to use
+     */
+    public function setLayout(string $layout): self
+    {
+        $this->currentLayout = $layout;
+        return $this;
+    }
+    
+    /**
+     * Add data to the view
+     */
+    public function with(array $data): self
+    {
+        $this->dataContainer->with($data);
+        return $this;
+    }
+    
+    /**
+     * Set breadcrumbs
+     */
+    public function setBreadcrumbs(array $breadcrumbs): self
+    {
+        $this->dataContainer->set('breadcrumbs', $breadcrumbs);
+        return $this;
+    }
+    
+    /**
+     * Set page actions
+     */
+    public function setPageActions(array $actions): self
+    {
+        $this->dataContainer->set('pageActions', $actions);
+        return $this;
+    }
+    
+    /**
+     * Set page description
+     */
+    public function setPageDescription(string $description): self
+    {
+        $this->dataContainer->set('pageDescription', $description);
+        return $this;
+    }
+    
+    /**
+     * Set help link
+     */
+    public function setHelpLink(string $link): self
+    {
+        $this->dataContainer->set('helpLink', $link);
+        return $this;
+    }
+    
+    /**
+     * Render the view with layout
+     */
+    public function render(string $view, array $viewData = []): void
+    {
+        // Merge all data
+        $data = array_merge($this->dataContainer->all(), $viewData);
+        
+        // Render the view content
+        $content = $this->viewRenderer->render($view, $data);
+        
+        // Display with layout, passing $this so the layout can call component()
+        $this->layoutRenderer->displayWithLayout($this->currentLayout, $content, $data, $this);
+    }
+    
+    /**
+     * Render a component
+     */
+    public function component(string $component, array $componentData = []): void
+    {
+        $data = array_merge($this->dataContainer->all(), $componentData);
+        $this->componentRenderer->render($component, $data);
+    }
+}
+
+// File: app/Core/Layout/Layouts/MainLayout.php (UPDATED)
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,16 +220,16 @@
          onclick="toggleMobileMenu()"></div>
 
     <!-- Header Component -->
-    <?php $this->component('header'); ?>
+    <?php $layoutManager->component('header'); ?>
 
     <!-- Sidebar Component -->
-    <?php $this->component('sidebar'); ?>
+    <?php $layoutManager->component('sidebar'); ?>
 
     <!-- Main content -->
     <main id="mainContent" class="pt-16 lg:pl-64 transition-all duration-300">
         <!-- Page Header Component -->
         <?php if (!empty($breadcrumbs) || !empty($pageTitle) || !empty($pageActions)): ?>
-            <?php $this->component('pageHeader'); ?>
+            <?php $layoutManager->component('pageHeader'); ?>
         <?php endif; ?>
         
         <!-- Page Content -->
@@ -77,7 +239,7 @@
     </main>
 
     <!-- Scripts Component -->
-    <?php $this->component('scripts'); ?>
+    <?php $layoutManager->component('scripts'); ?>
     
     <!-- Session Handler Script -->
      <script>

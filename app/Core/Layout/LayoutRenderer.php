@@ -1,6 +1,5 @@
 <?php
-
-// File: app/Core/Layout/LayoutRenderer.php
+// File: app/Core/Layout/LayoutRenderer.php (UPDATED)
 namespace App\Core\Layout;
 
 /**
@@ -19,8 +18,9 @@ class LayoutRenderer
     
     /**
      * Render a layout with content
+     * Pass the layout manager instance so components can be rendered
      */
-    public function renderWithLayout(string $layout, string $content, array $data = []): string
+    public function renderWithLayout(string $layout, string $content, array $data = [], ?LayoutManager $layoutManager = null): string
     {
         $layoutFile = $this->layoutsPath . '/' . ucfirst($layout) . 'Layout.php';
         
@@ -28,8 +28,9 @@ class LayoutRenderer
             throw new \RuntimeException("Layout file not found: {$layoutFile}");
         }
         
-        // Add content to data
+        // Add content and layout manager to data
         $data['content'] = $content;
+        $data['layoutManager'] = $layoutManager;
         
         return $this->viewRenderer->render($layoutFile, $data);
     }
@@ -37,8 +38,8 @@ class LayoutRenderer
     /**
      * Display a layout with content
      */
-    public function displayWithLayout(string $layout, string $content, array $data = []): void
+    public function displayWithLayout(string $layout, string $content, array $data = [], ?LayoutManager $layoutManager = null): void
     {
-        echo $this->renderWithLayout($layout, $content, $data);
+        echo $this->renderWithLayout($layout, $content, $data, $layoutManager);
     }
 }
