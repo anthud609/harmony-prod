@@ -88,8 +88,8 @@
                 </div>
 
                 <!-- Credentials Login Form -->
-                <form id="credentialsForm" class="space-y-4 sm:space-y-6" method="POST" action="/login">
-                    <!-- Username field (changed from email to match PHP backend) -->
+<form id="credentialsForm" class="space-y-4 sm:space-y-6" method="POST" action="/login">
+    <?= csrf_field() ?>                    <!-- Username field (changed from email to match PHP backend) -->
                     <div class="relative">
                         <label class="block text-sm font-medium text-white/90 mb-2">Username / Email</label>
                         <div class="relative">

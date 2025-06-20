@@ -127,4 +127,17 @@ class DashboardController
             ]
         ];
     }
+
+    public function updateWidget(): void
+{
+    // CSRF is automatically verified by middleware for POST requests
+    
+    $widgetId = $_POST['widget_id'] ?? null;
+    $configuration = $_POST['configuration'] ?? [];
+    
+    // Process the update...
+    
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true]);
+}
 }

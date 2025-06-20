@@ -241,6 +241,54 @@ class GlobalScripts
         window.Messages = HarmonyComponents.Messages;
         window.Notifications = HarmonyComponents.Notifications;
         </script>
+
+        <script>
+// CSRF Token Management
+window.CsrfToken = {
+    token: '<?= csrf_token() ?>',
+    
+    getToken() {
+        return this.token;
+    },
+    
+    refreshToken() {
+        // Optionally implement token refresh via AJAX
+        return this.token;
+    },
+    
+    // Add CSRF token to all AJAX requests
+    setupAjaxDefaults() {
+        // For native fetch
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            options.headers = options.headers || {};
+            
+            // Add CSRF token to non-GET requests
+            if (!options.method || options.method.toUpperCase() !== 'GET') {
+                options.headers['X-CSRF-Token'] = CsrfToken.getToken();
+            }
+            
+            return originalFetch(url, options);
+        };
+        
+        // For XMLHttpRequest
+        const open = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            open.apply(this, arguments);
+            
+            if (method.toUpperCase() !== 'GET') {
+                this.setRequestHeader('X-CSRF-Token', CsrfToken.getToken());
+            }
+        };
+    }
+};
+
+// Initialize CSRF for AJAX requests
+document.addEventListener('DOMContentLoaded', function() {
+    CsrfToken.setupAjaxDefaults();
+});
+</script>
+
         <?php
     }
 }

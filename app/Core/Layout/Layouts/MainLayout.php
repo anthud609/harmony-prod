@@ -47,6 +47,8 @@
     <?php if (isset($additionalStyles)): ?>
         <?= $additionalStyles ?>
     <?php endif; ?>
+
+    <?= csrf_meta() ?>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
