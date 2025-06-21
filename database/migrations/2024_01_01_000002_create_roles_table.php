@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateRolesTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('roles', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('roles', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->string('name', 100)->unique();
             $table->string('display_name', 200);
@@ -19,7 +21,7 @@ class CreateRolesTable extends Migration
             $table->boolean('is_system')->default(false); // System roles can't be deleted
             $table->boolean('is_active')->default(true);
             
-            $this->addTimestamps($table);
+            $table->timestamps();
             $this->addUserStamps($table);
             
             $table->index('name');
@@ -28,8 +30,8 @@ class CreateRolesTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('roles');
+        Schema::dropIfExists('roles');
     }
 }

@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateMenuItemsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('menu_items', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('menu_items', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->string('name', 100);
             $table->string('label', 200);
@@ -23,7 +25,7 @@ class CreateMenuItemsTable extends Migration
             $table->json('badge')->nullable(); // For notification badges
             $table->json('dropdown_items')->nullable(); // For nested items
             
-            $this->addTimestamps($table);
+            $table->timestamps();
             
             $table->foreign('parent_id')->references('id')->on('menu_items')->onDelete('cascade');
             $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('set null');
@@ -33,8 +35,8 @@ class CreateMenuItemsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('menu_items');
+        Schema::dropIfExists('menu_items');
     }
 }

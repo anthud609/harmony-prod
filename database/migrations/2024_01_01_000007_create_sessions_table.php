@@ -3,13 +3,15 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateSessionsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('sessions', function (Blueprint $table) {
+        Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->char('user_id', 36)->nullable()->index();
             $table->string('ip_address', 45)->nullable();
@@ -21,8 +23,8 @@ class CreateSessionsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('sessions');
+        Schema::dropIfExists('sessions');
     }
 }

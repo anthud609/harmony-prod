@@ -3,13 +3,15 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateUserPermissionsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('user_permissions', function (Blueprint $table) {
+        Schema::create('user_permissions', function (Blueprint $table) {
             $table->char('user_id', 36);
             $table->char('permission_id', 36);
             $table->boolean('is_granted')->default(true); // Can be used to explicitly deny
@@ -28,8 +30,8 @@ class CreateUserPermissionsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('user_permissions');
+        Schema::dropIfExists('user_permissions');
     }
 }

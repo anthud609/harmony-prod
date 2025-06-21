@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateNotificationsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('notifications', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->char('user_id', 36)->index();
             $table->string('type', 100);
@@ -30,8 +32,8 @@ class CreateNotificationsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('notifications');
+        Schema::dropIfExists('notifications');
     }
 }

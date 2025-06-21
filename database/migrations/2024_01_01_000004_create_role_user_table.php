@@ -3,13 +3,15 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateRoleUserTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('role_user', function (Blueprint $table) {
+        Schema::create('role_user', function (Blueprint $table) {
             $table->char('role_id', 36);
             $table->char('user_id', 36);
             $table->timestamp('assigned_at')->useCurrent();
@@ -25,8 +27,8 @@ class CreateRoleUserTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('role_user');
+        Schema::dropIfExists('role_user');
     }
 }

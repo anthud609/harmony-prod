@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateMessagesTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('messages', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('messages', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->char('sender_id', 36)->index();
             $table->char('recipient_id', 36)->index();
@@ -28,8 +30,8 @@ class CreateMessagesTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('messages');
+        Schema::dropIfExists('messages');
     }
 }

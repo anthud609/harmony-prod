@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateActivityLogsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('activity_logs', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('activity_logs', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->char('user_id', 36)->nullable()->index();
             $table->string('type', 100); // login, logout, create, update, delete, etc.
@@ -33,8 +35,8 @@ class CreateActivityLogsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('activity_logs');
+        Schema::dropIfExists('activity_logs');
     }
 }

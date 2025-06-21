@@ -3,13 +3,15 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreatePermissionRoleTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('permission_role', function (Blueprint $table) {
+        Schema::create('permission_role', function (Blueprint $table) {
             $table->char('permission_id', 36);
             $table->char('role_id', 36);
             $table->timestamp('granted_at')->useCurrent();
@@ -25,8 +27,8 @@ class CreatePermissionRoleTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('permission_role');
+        Schema::dropIfExists('permission_role');
     }
 }

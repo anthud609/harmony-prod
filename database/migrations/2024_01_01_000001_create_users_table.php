@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateUsersTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('users', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('users', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             // Authentication
             $table->string('username', 100)->unique();
@@ -56,8 +58,8 @@ class CreateUsersTable extends Migration
             $table->integer('message_count')->default(0);
             
             // Timestamps
-            $this->addTimestamps($table);
-            $this->addSoftDeletes($table);
+            $table->timestamps();
+            $table->softDeletes();
             $table->timestamp('last_login_at')->nullable();
             $table->timestamp('password_changed_at')->nullable();
             
@@ -68,8 +70,8 @@ class CreateUsersTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('users');
+        Schema::dropIfExists('users');
     }
 }

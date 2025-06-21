@@ -3,14 +3,16 @@
 
 namespace Database\Migrations;
 
+use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Schema\Blueprint;
 
 class CreateDepartmentsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        $this->schema->create('departments', function (Blueprint $table) {
-            $this->addUuidPrimaryKey($table);
+        Schema::create('departments', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             
             $table->string('name', 200);
             $table->string('code', 50)->unique();
@@ -19,7 +21,7 @@ class CreateDepartmentsTable extends Migration
             $table->char('manager_id', 36)->nullable()->index();
             $table->boolean('is_active')->default(true);
             
-            $this->addTimestamps($table);
+            $table->timestamps();
             $this->addUserStamps($table);
             
             $table->foreign('parent_id')->references('id')->on('departments')->onDelete('set null');
@@ -30,8 +32,8 @@ class CreateDepartmentsTable extends Migration
         });
     }
     
-    public function down()
+    public function down(): void
     {
-        $this->schema->dropIfExists('departments');
+        Schema::dropIfExists('departments');
     }
 }

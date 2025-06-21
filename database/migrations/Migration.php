@@ -3,34 +3,17 @@
 
 namespace Database\Migrations;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Database\Schema\Builder;
+use Illuminate\Database\Migrations\Migration as BaseMigration;
 
-abstract class Migration
+abstract class Migration extends BaseMigration
 {
     /**
-     * The schema builder instance
-     */
-    protected Builder $schema;
-    
-    /**
-     * The database manager instance
-     */
-    protected Capsule $db;
-    
-    public function __construct()
-    {
-        $this->db = new Capsule();
-        $this->schema = $this->db->schema();
-    }
-    
-    /**
-     * Run the migrations
+     * Run the migrations.
      */
     abstract public function up(): void;
-    
+
     /**
-     * Reverse the migrations
+     * Reverse the migrations.
      */
     abstract public function down(): void;
 }
