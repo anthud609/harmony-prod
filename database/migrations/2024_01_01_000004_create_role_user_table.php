@@ -1,4 +1,5 @@
 <?php
+// File: database/migrations/2024_01_01_000004_create_role_user_table.php
 
 use Illuminate\Database\Schema\Blueprint;
 
@@ -12,8 +13,9 @@ class CreateRoleUserTable
         $schema->create('role_user', function (Blueprint $table) {
             $table->char('role_id', 36);
             $table->char('user_id', 36);
-            $table->timestamp('assigned_at')->useCurrent();
+            $table->timestamp('assigned_at')->nullable();
             $table->char('assigned_by', 36)->nullable();
+            $table->timestamps(); // This adds created_at and updated_at columns
             
             $table->primary(['role_id', 'user_id']);
             $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');

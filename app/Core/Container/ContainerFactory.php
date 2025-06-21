@@ -10,6 +10,7 @@ use App\Core\Container\Providers\LayoutServiceProvider;
 use App\Core\Container\Providers\LoggingServiceProvider;
 use App\Core\Container\Providers\RoutingServiceProvider;
 use App\Core\Container\Providers\SecurityServiceProvider;
+use App\Core\Container\Providers\DatabaseServiceProvider;
 use DI\Container;
 use DI\ContainerBuilder;
 
@@ -35,14 +36,18 @@ class ContainerFactory
         }
 
         // Add definitions from service providers
-        $providers = [
-            new LoggingServiceProvider(), // Add logging first so other services can use it
-            new SecurityServiceProvider(),
-            new LayoutServiceProvider(),
-            new ControllerServiceProvider(),
-            new ApiServiceProvider(),
-            new RoutingServiceProvider(), // Add routing provider
-        ];
+   // File: app/Core/Container/ContainerFactory.php
+// Add this to the providers array:
+
+$providers = [
+    new LoggingServiceProvider(),
+    new DatabaseServiceProvider(), // Add this line
+    new SecurityServiceProvider(),
+    new LayoutServiceProvider(),
+    new ControllerServiceProvider(),
+    new ApiServiceProvider(),
+    new RoutingServiceProvider(),
+];
 
         foreach ($providers as $provider) {
             $containerBuilder->addDefinitions($provider->getDefinitions());

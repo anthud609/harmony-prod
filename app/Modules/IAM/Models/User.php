@@ -61,7 +61,7 @@ class User extends BaseModel
             ->wherePivot('is_granted', true)
             ->where(function ($query) {
                 $query->whereNull('user_permissions.expires_at')
-                    ->orWhere('user_permissions.expires_at', '>', now());
+                    ->orWhere('user_permissions.expires_at', '>', date('Y-m-d H:i:s'));
             });
     }
     
@@ -222,7 +222,7 @@ class User extends BaseModel
         
         if (!$this->hasRole($roleName)) {
             $this->roles()->attach($role->id, [
-                'assigned_at' => now(),
+                'assigned_at' => date('Y-m-d H:i:s'),
                 'assigned_by' => $assignedBy
             ]);
         }

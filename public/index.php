@@ -2,6 +2,7 @@
 // File: public/index.php (FIXED VERSION)
 require_once __DIR__ . '/../vendor/autoload.php';
 
+
 use App\Core\Container\ContainerFactory;
 use App\Core\Routing\Router;
 use App\Core\Http\Request;
@@ -18,7 +19,8 @@ use Psr\Log\LoggerInterface;
 try {
     // Create DI container
     $container = ContainerFactory::create();
-    
+    // After creating the container, initialize database
+$container->get(\Illuminate\Database\Capsule\Manager::class);
     // Create HTTP kernel
     $kernel = new Kernel($container);
     

@@ -48,7 +48,7 @@ class Role extends BaseModel
         
         if (!$this->permissions()->where('permission_id', $permission->id)->exists()) {
             $this->permissions()->attach($permission->id, [
-                'granted_at' => now(),
+                'granted_at' => date('Y-m-d H:i:s'),
                 'granted_by' => $grantedBy
             ]);
         }

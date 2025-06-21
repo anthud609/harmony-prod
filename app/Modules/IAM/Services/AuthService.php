@@ -1,47 +1,16 @@
 <?php
-
 // File: app/Modules/IAM/Services/AuthService.php
 
 namespace App\Modules\IAM\Services;
 
 use App\Core\Traits\LoggerTrait;
+use App\Modules\IAM\Models\User; // Add this import
 
 class AuthService
 {
     use LoggerTrait;
 
-    // Demo users - in production this would be from database
-    private array $users = [
-        'alice_admin@email.com' => [
-            'password' => 'secret',
-            'role' => 'admin',
-            'firstName' => 'Alice',
-            'lastName' => 'Johnson',
-            'jobTitle' => 'System Administrator',
-            'preferredTheme' => 'dark',
-            'notificationCount' => 5,
-        ],
-        'bob_editor@email.com' => [
-            'password' => 'secret',
-            'role' => 'editor',
-            'firstName' => 'Bob',
-            'lastName' => 'Smith',
-            'jobTitle' => 'Content Manager',
-            'preferredTheme' => 'light',
-            'notificationCount' => 3,
-        ],
-        'charlie_user@email.com' => [
-            'password' => 'secret',
-            'role' => 'user',
-            'firstName' => 'Charlie',
-            'lastName' => 'Brown',
-            'jobTitle' => 'Sales Representative',
-            'preferredTheme' => 'system',
-            'notificationCount' => 12,
-        ],
-    ];
-
- /**
+    /**
      * Authenticate user
      */
     public function authenticate(string $username, string $password): ?array
@@ -64,7 +33,7 @@ class AuthService
         
         // Update last login
         $user->update([
-            'last_login_at' => now(),
+            'last_login_at' => date('Y-m-d H:i:s'),
             'notification_count' => $user->notifications()->where('is_read', false)->count(),
             'message_count' => $user->receivedMessages()->where('is_read', false)->count()
         ]);
@@ -98,47 +67,28 @@ class AuthService
         
         return $userData;
     }
-    
+
     /**
      * Log successful login
      */
     public function logSuccessfulLogin(string $username): void
     {
-        $user = User::where('username', $username)
-            ->orWhere('email', $username)
-            ->first();
-        
-        if ($user) {
-            ActivityLog::create([
-                'user_id' => $user->id,
-                'type' => 'auth',
-                'module' => 'authentication',
-                'action' => 'login',
-                'description' => 'User logged in successfully',
-                'subject_type' => User::class,
-                'subject_id' => $user->id,
-                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-                'performed_at' => now()
-            ]);
-        }
-        
-        $this->logInfo('User login successful', [
+        $this->logInfo('User logged in', [
             'username' => $username,
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
         ]);
     }
 
     /**
-     * Log failed login
+     * Log failed login attempt
      */
     public function logFailedLogin(string $username): void
     {
-        $this->logWarning('Login attempt failed', [
+        $this->logWarning('Failed login attempt', [
             'username' => $username,
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
         ]);
     }
 
@@ -147,7 +97,7 @@ class AuthService
      */
     public function logLogout(string $username): void
     {
-        $this->logInfo('User logout', [
+        $this->logInfo('User logged out', [
             'username' => $username,
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
         ]);
@@ -158,24 +108,25 @@ class AuthService
      */
     public function updateThemePreference(string $theme): bool
     {
-        // Validate theme value
-        $valid = in_array($theme, ['light', 'dark', 'system']);
-
-        if ($valid) {
-            $this->logDebug('Theme preference updated', ['theme' => $theme]);
-        } else {
-            $this->logWarning('Invalid theme preference attempted', ['theme' => $theme]);
+        $validThemes = ['light', 'dark', 'system'];
+        
+        if (!in_array($theme, $validThemes)) {
+            $this->logWarning('Invalid theme preference', ['theme' => $theme]);
+            return false;
         }
-
-        return $valid;
+        
+        // In a real application, update the user's theme in database
+        $this->logInfo('Theme preference updated', ['theme' => $theme]);
+        
+        return true;
     }
 
     /**
-     * Mark all notifications as read
+     * Mark all notifications as read for a user
      */
-    public function markAllNotificationsRead(int $userId): void
+    public function markAllNotificationsRead(string $userId): void
     {
-        // In production, update database
-        $this->logDebug('Notifications marked as read', ['userId' => $userId]);
+        // In a real application, update database
+        $this->logInfo('All notifications marked as read', ['userId' => $userId]);
     }
 }
