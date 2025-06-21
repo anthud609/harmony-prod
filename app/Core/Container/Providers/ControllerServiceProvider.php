@@ -1,5 +1,4 @@
 <?php
-
 // File: app/Core/Container/Providers/ControllerServiceProvider.php
 
 namespace App\Core\Container\Providers;
@@ -11,6 +10,8 @@ use App\Core\Dashboard\Repositories\DashboardRepository;
 use App\Core\Dashboard\Repositories\WidgetRepository;
 use App\Core\Dashboard\Services\DashboardService;
 use App\Modules\IAM\Controllers\AuthController;
+use App\Modules\IAM\Controllers\InboxController;
+use App\Modules\IAM\Controllers\NotificationsController;
 use App\Modules\IAM\Services\AuthService;
 
 class ControllerServiceProvider implements ServiceProviderInterface
@@ -30,6 +31,8 @@ class ControllerServiceProvider implements ServiceProviderInterface
             // Controllers - let autowiring handle everything
             DashboardController::class => \DI\autowire(),
             AuthController::class => \DI\autowire(),
+            InboxController::class => \DI\autowire(),
+            NotificationsController::class => \DI\autowire(),
         ];
     }
 }

@@ -1,5 +1,5 @@
 <?php
-// File: app/Core/Layout/Components/Notifications.php (FIXED)
+// File: app/Core/Layout/Components/Notifications.php (FIXED - NO MOCK DATA)
 
 namespace App\Core\Layout\Components;
 
@@ -20,9 +20,23 @@ class Notifications
         $user = $data['user'] ?? [];
         $userId = $user['id'] ?? null;
         
-        // Get notifications from database
-        $notifications = $this->getNotifications($userId);
-        $unreadCount = $this->getUnreadCount($userId);
+        if (!$userId) {
+            // No user, show empty notifications
+            $notifications = [];
+            $unreadCount = 0;
+        } else {
+            try {
+                $notifications = $this->getNotifications($userId);
+                $unreadCount = $this->getUnreadCount($userId);
+            } catch (\Exception $e) {
+                $this->logError('Failed to load notifications', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $userId
+                ]);
+                $notifications = [];
+                $unreadCount = 0;
+            }
+        }
         
         ?>
         <!-- Notifications -->
@@ -70,7 +84,7 @@ class Notifications
                 </div>
                 <div class="flex-1">
                     <p class="text-sm text-gray-900 dark:text-white mb-1">
-                        <?= $notification['message'] ?>
+                        <?= e($notification['message']) ?>
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400"><?= e($notification['time']) ?></p>
                     <?php if (!$notification['is_read']) : ?>
@@ -85,68 +99,57 @@ class Notifications
     }
 
     /**
-     * Get notifications from database
+     * Get notifications from database - NO MOCK DATA
      */
-    private function getNotifications(?string $userId, int $limit = 10): array
+    private function getNotifications(string $userId, int $limit = 10): array
     {
-        if (!$userId) {
-            return [];
-        }
+        // IMPORTANT: Only get from notifications table, not messages
+        $notifications = Notification::where('user_id', $userId)
+            ->whereNull('deleted_at') // Ensure not deleted
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
 
-        try {
-            // Get recent notifications from database
-            $notifications = Notification::where('user_id', $userId)
-                ->orderBy('created_at', 'desc')
-                ->limit($limit)
-                ->get();
+        $this->logDebug('Fetched notifications from database', [
+            'user_id' => $userId,
+            'count' => $notifications->count(),
+            'table' => $notifications->first()?->getTable() ?? 'notifications'
+        ]);
 
-            // Format for frontend
-            return $notifications->map(function ($notification) {
-                $displayData = $this->getDisplayData($notification->type);
-                
-                return [
-                    'id' => $notification->id,
-                    'type' => $notification->type,
-                    'icon' => $displayData['icon'],
-                    'color' => $displayData['color'],
-                    'message' => $notification->message,
-                    'time' => $this->formatTime($notification->created_at),
-                    'is_read' => $notification->is_read,
-                    'url' => $notification->url ?? null,
-                ];
-            })->toArray();
-
-        } catch (\Exception $e) {
-            $this->logError('Failed to load notifications for header', [
-                'user_id' => $userId,
-                'error' => $e->getMessage()
+        // Format for frontend
+        return $notifications->map(function ($notification) {
+            $displayData = $this->getDisplayData($notification->type);
+            
+            // Log each notification to debug
+            $this->logDebug('Processing notification', [
+                'id' => $notification->id,
+                'type' => $notification->type,
+                'message' => substr($notification->message, 0, 50) . '...',
+                'table' => $notification->getTable()
             ]);
             
-            return [];
-        }
+            return [
+                'id' => $notification->id,
+                'type' => $notification->type,
+                'icon' => $displayData['icon'],
+                'color' => $displayData['color'],
+                'message' => $notification->message, // This should be plain text notification message
+                'time' => $this->formatTime($notification->created_at),
+                'is_read' => (bool)$notification->is_read,
+                'url' => $notification->url ?? null,
+            ];
+        })->toArray();
     }
 
     /**
-     * Get unread notification count
+     * Get unread notification count - NO MOCK DATA
      */
-    private function getUnreadCount(?string $userId): int
+    private function getUnreadCount(string $userId): int
     {
-        if (!$userId) {
-            return 0;
-        }
-
-        try {
-            return Notification::where('user_id', $userId)
-                ->where('is_read', false)
-                ->count();
-                
-        } catch (\Exception $e) {
-            $this->logError('Failed to get unread notification count', [
-                'user_id' => $userId,
-                'error' => $e->getMessage()
-            ]);
-            return 0;
-        }
+        return Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->whereNull('deleted_at')
+            ->count();
     }
 
     /**
@@ -155,50 +158,44 @@ class Notifications
     private function getDisplayData(string $type): array
     {
         $typeMap = [
-            'leave_approved' => [
-                'icon' => 'fas fa-check',
-                'color' => 'green'
-            ],
-            'leave_rejected' => [
-                'icon' => 'fas fa-times',
-                'color' => 'red'
-            ],
-            'new_team_member' => [
-                'icon' => 'fas fa-user-plus',
-                'color' => 'blue'
-            ],
-            'birthday' => [
-                'icon' => 'fas fa-birthday-cake',
-                'color' => 'purple'
-            ],
-            'payroll_processed' => [
-                'icon' => 'fas fa-money-check-alt',
-                'color' => 'green'
-            ],
-            'document_uploaded' => [
-                'icon' => 'fas fa-file-upload',
-                'color' => 'blue'
-            ],
-            'meeting_scheduled' => [
-                'icon' => 'fas fa-calendar-plus',
-                'color' => 'indigo'
-            ],
-            'task_assigned' => [
-                'icon' => 'fas fa-tasks',
-                'color' => 'orange'
-            ],
-            'system_maintenance' => [
-                'icon' => 'fas fa-tools',
-                'color' => 'yellow'
-            ],
-            'security_alert' => [
-                'icon' => 'fas fa-shield-alt',
-                'color' => 'red'
-            ],
-            'default' => [
-                'icon' => 'fas fa-info-circle',
-                'color' => 'gray'
-            ]
+            // Leave related
+            'leave_approved' => ['icon' => 'fas fa-check-circle', 'color' => 'green'],
+            'leave_rejected' => ['icon' => 'fas fa-times-circle', 'color' => 'red'],
+            'leave_pending' => ['icon' => 'fas fa-clock', 'color' => 'orange'],
+            'leave_cancelled' => ['icon' => 'fas fa-ban', 'color' => 'gray'],
+            
+            // Meeting related
+            'meeting_scheduled' => ['icon' => 'fas fa-calendar-plus', 'color' => 'indigo'],
+            'meeting_reminder' => ['icon' => 'fas fa-bell', 'color' => 'blue'],
+            'meeting_cancelled' => ['icon' => 'fas fa-calendar-times', 'color' => 'red'],
+            
+            // HR related
+            'birthday' => ['icon' => 'fas fa-birthday-cake', 'color' => 'pink'],
+            'anniversary' => ['icon' => 'fas fa-gift', 'color' => 'purple'],
+            'new_team_member' => ['icon' => 'fas fa-user-plus', 'color' => 'blue'],
+            
+            // Payroll related
+            'payroll_processed' => ['icon' => 'fas fa-money-check-alt', 'color' => 'green'],
+            'expense_approved' => ['icon' => 'fas fa-receipt', 'color' => 'green'],
+            'expense_rejected' => ['icon' => 'fas fa-receipt', 'color' => 'red'],
+            
+            // Document related
+            'document_shared' => ['icon' => 'fas fa-share-alt', 'color' => 'indigo'],
+            'document_uploaded' => ['icon' => 'fas fa-file-upload', 'color' => 'blue'],
+            'policy_update' => ['icon' => 'fas fa-file-alt', 'color' => 'gray'],
+            
+            // Task related
+            'task_assigned' => ['icon' => 'fas fa-tasks', 'color' => 'orange'],
+            'task_completed' => ['icon' => 'fas fa-check-square', 'color' => 'green'],
+            'task_overdue' => ['icon' => 'fas fa-exclamation-triangle', 'color' => 'red'],
+            
+            // System related
+            'system_maintenance' => ['icon' => 'fas fa-tools', 'color' => 'yellow'],
+            'security_alert' => ['icon' => 'fas fa-shield-alt', 'color' => 'red'],
+            'system_update' => ['icon' => 'fas fa-sync-alt', 'color' => 'blue'],
+            
+            // Default
+            'default' => ['icon' => 'fas fa-info-circle', 'color' => 'gray']
         ];
 
         return $typeMap[$type] ?? $typeMap['default'];

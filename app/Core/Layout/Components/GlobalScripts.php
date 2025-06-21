@@ -13,10 +13,11 @@ class GlobalScripts
         // Namespace for global components
         window.HarmonyComponents = {
             CommandPalette: {
-                open: false,
+                isOpen: false,
                 selectedIndex: 0,
                 searchAbortController: null,
                 searchCache: new Map(),
+                isCommandMode: false,
                 
                 init() {
                     this.setupKeyboardShortcuts();
@@ -28,16 +29,22 @@ class GlobalScripts
                     const input = document.getElementById('commandInput');
                     
                     palette.classList.remove('hidden');
-                    this.open = true;
+                    this.isOpen = true;
                     
                     setTimeout(() => {
                         palette.classList.add('show');
                         input.focus();
+                        input.select();
                     }, 10);
                     
                     input.value = '';
                     this.selectedIndex = 0;
-                    this.updateSelectedItem();
+                    this.isCommandMode = false;
+                    
+                    // Update selected item after a brief delay to ensure DOM is ready
+                    setTimeout(() => {
+                        this.updateSelectedItem();
+                    }, 50);
                 },
                 
                 close() {
@@ -52,22 +59,27 @@ class GlobalScripts
                     
                     setTimeout(() => {
                         palette.classList.add('hidden');
-                        this.open = false;
+                        this.isOpen = false;
+                        this.isCommandMode = false;
                     }, 200);
                 },
                 
                 setupKeyboardShortcuts() {
                     document.addEventListener('keydown', (e) => {
-                        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                        // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+                        if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
                             e.preventDefault();
+                            e.stopPropagation();
                             this.open();
+                            return false;
                         }
                         
-                        if (e.key === 'Escape' && this.open) {
+                        if (e.key === 'Escape' && this.isOpen) {
+                            e.preventDefault();
                             this.close();
                         }
                         
-                        if (this.open) {
+                        if (this.isOpen) {
                             this.handleNavigation(e);
                         }
                     });
@@ -80,11 +92,187 @@ class GlobalScripts
                         let debounceTimer;
                         input.addEventListener('input', (e) => {
                             clearTimeout(debounceTimer);
+                            
+                            // Check if entering command mode
+                            if (e.target.value === '/') {
+                                this.isCommandMode = true;
+                                this.showCommandsOnly();
+                                return;
+                            } else if (e.target.value === '') {
+                                this.isCommandMode = false;
+                                this.showDefaultContent();
+                                return;
+                            } else if (!e.target.value.startsWith('/')) {
+                                this.isCommandMode = false;
+                            }
+                            
                             debounceTimer = setTimeout(() => {
-                                this.handleSearch(e.target.value);
-                            }, 300); // 300ms debounce
+                                if (this.isCommandMode) {
+                                    this.filterCommands(e.target.value);
+                                } else {
+                                    this.handleSearch(e.target.value);
+                                }
+                            }, 300);
                         });
                     }
+                },
+                
+                showCommandsOnly() {
+                    const searchResults = document.getElementById('searchResults');
+                    const defaultSections = document.querySelectorAll('#commandResults > div:not(#searchResults)');
+                    
+                    // Hide default sections
+                    defaultSections.forEach(el => el.classList.add('hidden'));
+                    
+                    // Show commands section
+                    searchResults.innerHTML = `
+                        <div class="p-2">
+                            <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Commands</p>
+                            ${this.getCommandsHTML()}
+                        </div>
+                    `;
+                    searchResults.classList.remove('hidden');
+                    
+                    // Reset selection to first item
+                    this.selectedIndex = 0;
+                    setTimeout(() => {
+                        this.updateSelectedItem();
+                    }, 10);
+                },
+                
+                filterCommands(query) {
+                    const searchResults = document.getElementById('searchResults');
+                    const commands = this.getCommands();
+                    
+                    // Filter commands based on query
+                    const filtered = commands.filter(cmd => 
+                        cmd.command.toLowerCase().includes(query.toLowerCase()) ||
+                        cmd.description.toLowerCase().includes(query.toLowerCase())
+                    );
+                    
+                    if (filtered.length === 0) {
+                        searchResults.innerHTML = `
+                            <div class="p-4 text-center text-gray-500 dark:text-gray-400">
+                                <p>No commands found matching "${query}"</p>
+                            </div>
+                        `;
+                    } else {
+                        searchResults.innerHTML = `
+                            <div class="p-2">
+                                <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Commands</p>
+                                ${this.getCommandsHTML(filtered)}
+                            </div>
+                        `;
+                    }
+                    
+                    // Reset selection to first item
+                    this.selectedIndex = 0;
+                    setTimeout(() => {
+                        this.updateSelectedItem();
+                    }, 10);
+                },
+                
+                getCommands() {
+                    return [
+                        {
+                            command: '/inbox',
+                            description: 'View all your messages',
+                            url: '/inbox',
+                        },
+                        {
+                            command: '/notifications',
+                            description: 'View all your notifications',
+                            url: '/notifications',
+                        },
+                        {
+                            command: '/settings',
+                            description: 'Open settings',
+                            url: '/settings',
+                        },
+                        {
+                            command: '/profile',
+                            description: 'View your profile',
+                            url: '/profile',
+                        },
+                        {
+                            command: '/help',
+                            description: 'Get help and support',
+                            url: '/help',
+                        },
+                        {
+                            command: '/dashboard',
+                            description: 'Go to dashboard',
+                            url: '/dashboard',
+                        },
+                        {
+                            command: '/employees',
+                            description: 'View all employees',
+                            url: '/employees',
+                        },
+                        {
+                            command: '/leave',
+                            description: 'Manage leave requests',
+                            url: '/leave',
+                        },
+                        {
+                            command: '/payroll',
+                            description: 'Access payroll',
+                            url: '/payroll',
+                        },
+                        {
+                            command: '/reports',
+                            description: 'View reports',
+                            url: '/reports',
+                        },
+                    ];
+                },
+                
+                getCommandsHTML(commands = null) {
+                    const cmds = commands || this.getCommands();
+                    return cmds.map(command => `
+                        <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
+                                data-command="${command.command}"
+                                data-url="${command.url}"
+                                onclick="CommandPalette.executeCommand('${command.url}')">
+                            <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-gray-600 dark:text-gray-400 font-mono text-sm">/</span>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    <span class="font-mono">${command.command}</span>
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">${command.description}</p>
+                            </div>
+                        </button>
+                    `).join('');
+                },
+                
+                executeCommand(url) {
+                    this.close();
+                    // Use the base URL if available
+                    if (window.BASE_URL) {
+                        window.location.href = window.BASE_URL + url;
+                    } else {
+                        window.location.href = url;
+                    }
+                },
+                
+                showDefaultContent() {
+                    const searchResults = document.getElementById('searchResults');
+                    const defaultSections = document.querySelectorAll('#commandResults > div:not(#searchResults)');
+                    
+                    // Show default sections
+                    defaultSections.forEach(el => el.classList.remove('hidden'));
+                    
+                    // Hide search results
+                    searchResults.classList.add('hidden');
+                    searchResults.innerHTML = '';
+                    
+                    // Reset selection to first item
+                    this.selectedIndex = 0;
+                    setTimeout(() => {
+                        this.updateSelectedItem();
+                    }, 10);
                 },
                 
                 handleNavigation(e) {
@@ -103,17 +291,28 @@ class GlobalScripts
                         const activeItem = document.querySelector('.command-item.active');
                         if (activeItem) {
                             activeItem.click();
-                            this.close();
                         }
                     }
                 },
                 
                 updateSelectedItem() {
                     const items = document.querySelectorAll('.command-item');
+                    
+                    // If no items, return
+                    if (items.length === 0) return;
+                    
+                    // Ensure selectedIndex is within bounds
+                    if (this.selectedIndex >= items.length) {
+                        this.selectedIndex = items.length - 1;
+                    }
+                    if (this.selectedIndex < 0) {
+                        this.selectedIndex = 0;
+                    }
+                    
                     items.forEach((item, index) => {
                         if (index === this.selectedIndex) {
                             item.classList.add('active');
-                            item.scrollIntoView({ block: 'nearest' });
+                            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                         } else {
                             item.classList.remove('active');
                         }
@@ -122,11 +321,7 @@ class GlobalScripts
                 
                 async handleSearch(query) {
                     if (query.length === 0) {
-                        // Show default content
-                        document.getElementById('searchResults').classList.add('hidden');
-                        document.querySelectorAll('#commandResults > div:not(#searchResults)').forEach(el => {
-                            el.classList.remove('hidden');
-                        });
+                        this.showDefaultContent();
                         return;
                     }
                     
@@ -300,9 +495,11 @@ class GlobalScripts
                     html += '</div>';
                     searchResults.innerHTML = html;
                     
-                    // Reset selected index
+                    // Reset selected index to first item
                     this.selectedIndex = 0;
-                    this.updateSelectedItem();
+                    setTimeout(() => {
+                        this.updateSelectedItem();
+                    }, 10);
                 },
                 
                 retrySearch(query) {

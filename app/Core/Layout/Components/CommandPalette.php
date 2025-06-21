@@ -1,5 +1,4 @@
 <?php
-
 // File: app/Core/Layout/Components/CommandPalette.php
 
 namespace App\Core\Layout\Components;
@@ -39,8 +38,8 @@ class CommandPalette
                     <div class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                         <div class="flex items-center gap-4">
                             <span class="flex items-center gap-1">
-                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">â†‘</kbd>
-                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">â†“</kbd>
+                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↑</kbd>
+                                <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↓</kbd>
                                 Navigate
                             </span>
                             <span class="flex items-center gap-1">
@@ -79,16 +78,19 @@ class CommandPalette
             <p class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Actions</p>
             <?php foreach ($this->getQuickActions() as $action) : ?>
             <button class="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors command-item"
-                    data-action="<?= $action['action'] ?>">
-                <div class="w-10 h-10 bg-<?= $action['color'] ?>-100 dark:bg-<?= $action['color'] ?>-900 rounded-lg flex items-center justify-center mr-3">
-                    <i class="<?= $action['icon'] ?> text-<?= $action['color'] ?>-600 dark:text-<?= $action['color'] ?>-400"></i>
+                    data-action="<?= e($action['action']) ?>"
+                    <?php if (isset($action['url'])) : ?>
+                    onclick="window.location.href='<?= e($action['url']) ?>'"
+                    <?php endif; ?>>
+                <div class="w-10 h-10 bg-<?= ecss($action['color']) ?>-100 dark:bg-<?= ecss($action['color']) ?>-900 rounded-lg flex items-center justify-center mr-3">
+                    <i class="<?= attr($action['icon']) ?> text-<?= ecss($action['color']) ?>-600 dark:text-<?= ecss($action['color']) ?>-400"></i>
                 </div>
                 <div class="flex-1 text-left">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white"><?= $action['title'] ?></p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400"><?= $action['description'] ?></p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white"><?= e($action['title']) ?></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400"><?= e($action['description']) ?></p>
                 </div>
                 <?php if (isset($action['shortcut'])) : ?>
-                <kbd class="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded"><?= $action['shortcut'] ?></kbd>
+                <kbd class="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded"><?= e($action['shortcut']) ?></kbd>
                 <?php endif; ?>
             </button>
             <?php endforeach; ?>
@@ -104,6 +106,14 @@ class CommandPalette
                 <span class="text-sm text-gray-700 dark:text-gray-300"><?= e($search['query']) ?></span>
             </button>
             <?php endforeach; ?>
+        </div>
+        
+        <!-- Command Hint -->
+        <div class="p-2 border-t border-gray-200 dark:border-gray-700">
+            <p class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                <i class="fas fa-lightbulb mr-1"></i>
+                Tip: Type <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded font-mono">/</kbd> to see all commands
+            </p>
         </div>
         
         <!-- Dynamic Search Results (hidden by default) -->
@@ -122,7 +132,7 @@ class CommandPalette
                 'color' => 'indigo',
                 'title' => 'Add New Employee',
                 'description' => 'Create a new employee profile',
-                'shortcut' => 'âŒ˜N',
+                'shortcut' => '⌘N',
             ],
             [
                 'action' => 'request-leave',
@@ -130,7 +140,38 @@ class CommandPalette
                 'color' => 'green',
                 'title' => 'Request Leave',
                 'description' => 'Submit a new leave request',
-                'shortcut' => 'âŒ˜L',
+                'shortcut' => '⌘L',
+            ],
+        ];
+    }
+
+    private function getCommands(): array
+    {
+        return [
+            [
+                'command' => '/inbox',
+                'description' => 'View all your messages',
+                'url' => '/inbox',
+            ],
+            [
+                'command' => '/notifications',
+                'description' => 'View all your notifications',
+                'url' => '/notifications',
+            ],
+            [
+                'command' => '/settings',
+                'description' => 'Open settings',
+                'url' => '/settings',
+            ],
+            [
+                'command' => '/profile',
+                'description' => 'View your profile',
+                'url' => '/profile',
+            ],
+            [
+                'command' => '/help',
+                'description' => 'Get help and support',
+                'url' => '/help',
             ],
         ];
     }
