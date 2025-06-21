@@ -1,5 +1,4 @@
 <?php
-// File: app/Modules/IAM/Models/Notification.php
 
 namespace App\Modules\IAM\Models;
 
@@ -11,28 +10,25 @@ class Notification extends BaseModel
     protected $fillable = [
         'user_id',
         'type',
-        'icon',
-        'color',
         'title',
         'message',
         'data',
-        'url',
+        'icon',
+        'color',
         'is_read',
         'read_at',
-        'is_important',
         'expires_at'
     ];
     
     protected $casts = [
         'data' => 'array',
         'is_read' => 'boolean',
-        'is_important' => 'boolean',
         'read_at' => 'datetime',
         'expires_at' => 'datetime'
     ];
     
     /**
-     * User who receives the notification
+     * User who owns this notification
      */
     public function user(): BelongsTo
     {
@@ -47,27 +43,8 @@ class Notification extends BaseModel
         if (!$this->is_read) {
             $this->update([
                 'is_read' => true,
-                'read_at' => new \DateTime()
+                'read_at' => now()
             ]);
-            
-            // Update user's notification count
-            $this->user->decrement('notification_count');
-        }
-    }
-    
-    /**
-     * Mark as unread
-     */
-    public function markAsUnread(): void
-    {
-        if ($this->is_read) {
-            $this->update([
-                'is_read' => false,
-                'read_at' => null
-            ]);
-            
-            // Update user's notification count
-            $this->user->increment('notification_count');
         }
     }
     
@@ -80,22 +57,11 @@ class Notification extends BaseModel
     }
     
     /**
-     * Scope for important notifications
+     * Scope for recent notifications
      */
-    public function scopeImportant($query)
+    public function scopeRecent($query, $days = 7)
     {
-        return $query->where('is_important', true);
-    }
-    
-    /**
-     * Scope for non-expired notifications
-     */
-    public function scopeActive($query)
-    {
-        return $query->where(function ($q) {
-            $q->whereNull('expires_at')
-              ->orWhere('expires_at', '>', date('Y-m-d H:i:s'));
-        });
+        return $query->where('created_at', '>=', now()->subDays($days));
     }
     
     /**
@@ -103,74 +69,47 @@ class Notification extends BaseModel
      */
     public function getTimeAttribute(): string
     {
-        // Simple time difference calculation
-        $created = $this->created_at;
-        if (!$created) {
+        if (!$this->created_at) {
             return 'just now';
         }
         
-        $now = new \DateTime();
-        $diff = $now->getTimestamp() - $created->getTimestamp();
+        $diff = now()->diffInMinutes($this->created_at);
         
-        if ($diff < 60) {
+        if ($diff < 1) {
             return 'just now';
-        } elseif ($diff < 3600) {
-            $minutes = floor($diff / 60);
-            return $minutes . ' minute' . ($minutes > 1 ? 's' : '') . ' ago';
-        } elseif ($diff < 86400) {
-            $hours = floor($diff / 3600);
+        } elseif ($diff < 60) {
+            return $diff . ' minute' . ($diff > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 1440) {
+            $hours = floor($diff / 60);
             return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
-        } elseif ($diff < 604800) {
-            $days = floor($diff / 86400);
+        } elseif ($diff < 10080) {
+            $days = floor($diff / 1440);
             return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
         } else {
-            return $created->format('M j, Y');
+            return $this->created_at->format('M j, Y');
         }
     }
     
     /**
-     * Get icon class based on type
+     * Get icon and color based on type
      */
-    public function getIconClassAttribute(): string
+    public function getDisplayDataAttribute(): array
     {
-        if ($this->icon) {
-            return $this->icon;
-        }
-        
-        $icons = [
-            'leave_approved' => 'fas fa-check',
-            'leave_rejected' => 'fas fa-times',
-            'new_team_member' => 'fas fa-user-plus',
-            'birthday' => 'fas fa-birthday-cake',
-            'announcement' => 'fas fa-bullhorn',
-            'task_assigned' => 'fas fa-tasks',
-            'meeting_reminder' => 'fas fa-calendar',
-            'system' => 'fas fa-info-circle'
+        $defaults = [
+            'leave_approved' => ['icon' => 'fas fa-check', 'color' => 'green'],
+            'leave_rejected' => ['icon' => 'fas fa-times', 'color' => 'red'],
+            'leave_pending' => ['icon' => 'fas fa-clock', 'color' => 'orange'],
+            'new_team_member' => ['icon' => 'fas fa-user-plus', 'color' => 'blue'],
+            'birthday' => ['icon' => 'fas fa-birthday-cake', 'color' => 'purple'],
+            'announcement' => ['icon' => 'fas fa-bullhorn', 'color' => 'indigo'],
+            'task_assigned' => ['icon' => 'fas fa-tasks', 'color' => 'yellow'],
+            'payroll' => ['icon' => 'fas fa-money-check-alt', 'color' => 'green'],
+            'system' => ['icon' => 'fas fa-cog', 'color' => 'gray'],
         ];
         
-        return $icons[$this->type] ?? 'fas fa-bell';
-    }
-    
-    /**
-     * Get color class based on type
-     */
-    public function getColorClassAttribute(): string
-    {
-        if ($this->color) {
-            return $this->color;
-        }
-        
-        $colors = [
-            'leave_approved' => 'green',
-            'leave_rejected' => 'red',
-            'new_team_member' => 'blue',
-            'birthday' => 'purple',
-            'announcement' => 'yellow',
-            'task_assigned' => 'indigo',
-            'meeting_reminder' => 'orange',
-            'system' => 'gray'
+        return [
+            'icon' => $this->icon ?? $defaults[$this->type]['icon'] ?? 'fas fa-bell',
+            'color' => $this->color ?? $defaults[$this->type]['color'] ?? 'blue'
         ];
-        
-        return $colors[$this->type] ?? 'blue';
     }
 }

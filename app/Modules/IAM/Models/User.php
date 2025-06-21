@@ -105,22 +105,7 @@ class User extends BaseModel
         return $this->hasMany(Notification::class);
     }
     
-    /**
-     * Sent messages
-     */
-    public function sentMessages(): HasMany
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
-    
-    /**
-     * Received messages
-     */
-    public function receivedMessages(): HasMany
-    {
-        return $this->hasMany(Message::class, 'recipient_id');
-    }
-    
+   
     /**
      * Get full name
      */
@@ -129,6 +114,48 @@ class User extends BaseModel
         return trim($this->first_name . ' ' . $this->last_name);
     }
     
+
+    // Add these relationships to your User model
+
+/**
+ * Messages sent by this user
+ */
+public function sentMessages(): HasMany
+{
+    return $this->hasMany(Message::class, 'sender_id');
+}
+
+/**
+ * Messages received by this user
+ */
+public function receivedMessages(): HasMany
+{
+    return $this->hasMany(Message::class, 'recipient_id');
+}
+
+/**
+ * User's notifications
+ */
+public function notifications(): HasMany
+{
+    return $this->hasMany(Notification::class);
+}
+
+/**
+ * Get unread message count
+ */
+public function getUnreadMessageCountAttribute(): int
+{
+    return $this->receivedMessages()->unread()->count();
+}
+
+/**
+ * Get unread notification count
+ */
+public function getUnreadNotificationCountAttribute(): int
+{
+    return $this->notifications()->unread()->count();
+}
     /**
      * Get initials
      */
