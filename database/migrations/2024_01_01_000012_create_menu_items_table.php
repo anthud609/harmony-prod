@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000012_create_menu_items_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateMenuItemsTable extends Migration
+class CreateMenuItemsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('menu_items', function (Blueprint $table) {
+        $schema->create('menu_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->string('name', 100);
@@ -34,9 +32,12 @@ class CreateMenuItemsTable extends Migration
             $table->index('is_active');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('menu_items');
+        $schema->dropIfExists('menu_items');
     }
 }

@@ -1,92 +1,122 @@
 <?php
 // File: database/migrate.php
-// Run database migrations with proper Laravel bootstrapping
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../bootstrap/database.php';
 
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-// Ensure facades are properly set up
-$capsule = Capsule::connection();
-Schema::setConnection($capsule);
+// Get the database connection
+$connection = Capsule::connection();
+$schema = $connection->getSchemaBuilder();
 
-echo "Running migrations...\n";
+echo "Starting database migration...\n\n";
 
 // Get all migration files
-$migrations = glob(__DIR__ . '/migrations/*.php');
-sort($migrations);
+$migrationFiles = glob(__DIR__ . '/migrations/*.php');
+sort($migrationFiles);
 
-// Track migrated files
-$migratedFiles = [];
+// Track which migrations have been run
+$migrationsTable = 'migrations';
 
-// Run each migration
-foreach ($migrations as $file) {
-    $filename = basename($file);
+// Create migrations table if it doesn't exist
+if (!$schema->hasTable($migrationsTable)) {
+    echo "Creating migrations table...\n";
+    $schema->create($migrationsTable, function ($table) {
+        $table->increments('id');
+        $table->string('migration');
+        $table->integer('batch');
+        $table->timestamp('migrated_at')->useCurrent();
+    });
+}
+
+// Get already run migrations
+$ranMigrations = $connection->table($migrationsTable)->pluck('migration')->toArray();
+
+// Get the current batch number
+$batch = $connection->table($migrationsTable)->max('batch') ?? 0;
+$batch++;
+
+$migrationsRun = 0;
+
+foreach ($migrationFiles as $file) {
+    $filename = basename($file, '.php');
     
-    // Skip the Migration base class
-    if ($filename === 'Migration.php') {
+    // Skip if already run
+    if (in_array($filename, $ranMigrations)) {
+        echo "Skipping: {$filename} (already run)\n";
         continue;
     }
     
-    // Extract class name
-    $className = 'Database\\Migrations\\' . str_replace('.php', '', preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $filename));
-    $className = str_replace(' ', '', ucwords(str_replace('_', ' ', $className)));
-    
-    // Load the migration file
-    require_once $file;
-    
-    if (!class_exists($className)) {
-        echo "✗ Could not find class: $className\n";
+    // Skip the base Migration class
+    if ($filename === 'Migration') {
         continue;
     }
     
-    echo "Running migration: " . basename($className) . "...\n";
+    echo "Running: {$filename}...\n";
     
     try {
-        $migration = new $className();
-        $migration->up();
-        echo "✓ " . basename($className) . " completed\n";
-        $migratedFiles[] = $filename;
-    } catch (Exception $e) {
-        echo "✗ " . basename($className) . " failed: " . $e->getMessage() . "\n";
-        echo "Migration failed. Stopping execution.\n";
+        // Include the migration file
+        require_once $file;
         
-        // Optionally rollback already run migrations
-        if (!empty($migratedFiles)) {
-            echo "\nRolling back completed migrations...\n";
-            foreach (array_reverse($migratedFiles) as $migratedFile) {
-                try {
-                    $className = 'Database\\Migrations\\' . str_replace('.php', '', preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $migratedFile));
-                    $className = str_replace(' ', '', ucwords(str_replace('_', ' ', $className)));
-                    $migration = new $className();
-                    if (method_exists($migration, 'down')) {
-                        $migration->down();
-                        echo "✓ Rolled back: " . basename($className) . "\n";
-                    }
-                } catch (Exception $rollbackError) {
-                    echo "✗ Failed to rollback: " . basename($className) . " - " . $rollbackError->getMessage() . "\n";
-                }
-            }
+        // Get the class name from the filename
+        // Remove date prefix (2024_01_01_000001_) and .php extension
+        $nameWithoutDate = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $filename);
+        // Convert snake_case to PascalCase
+        $parts = explode('_', $nameWithoutDate);
+        $className = '';
+        foreach ($parts as $part) {
+            $className .= ucfirst($part);
         }
         
+        // Check if class exists
+        if (!class_exists($className)) {
+            echo "  ERROR: Class {$className} not found in {$filename}\n";
+            continue;
+        }
+        
+        // Create instance and run migration
+        $migration = new $className();
+        
+        // Pass the schema builder to the migration
+        if (method_exists($migration, 'up')) {
+            $migration->up($schema);
+        } else {
+            echo "  ERROR: Migration {$className} does not have an 'up' method\n";
+            continue;
+        }
+        
+        // Record the migration
+        $connection->table($migrationsTable)->insert([
+            'migration' => $filename,
+            'batch' => $batch,
+            'migrated_at' => date('Y-m-d H:i:s')
+        ]);
+        
+        echo "  ✓ Success\n";
+        $migrationsRun++;
+        
+    } catch (Exception $e) {
+        echo "  ERROR: " . $e->getMessage() . "\n";
+        echo "  Rolling back...\n";
         exit(1);
     }
 }
 
-echo "\nAll migrations completed successfully!\n";
-
-// Create database seeder if requested
-if (in_array('--seed', $argv)) {
-    echo "\nRunning database seeder...\n";
-    require_once __DIR__ . '/seeders/DatabaseSeeder.php';
-    
-    try {
-        $seeder = new Database\Seeders\DatabaseSeeder();
-        $seeder->run();
-        echo "✓ Database seeding completed\n";
-    } catch (Exception $e) {
-        echo "✗ Seeding failed: " . $e->getMessage() . "\n";
-    }
+if ($migrationsRun === 0) {
+    echo "\nNo new migrations to run.\n";
+} else {
+    echo "\nSuccessfully ran {$migrationsRun} migration(s).\n";
 }
+
+// Show current database status
+echo "\nDatabase tables:\n";
+$tables = $connection->select("SHOW TABLES");
+$dbName = $connection->getDatabaseName();
+foreach ($tables as $table) {
+    $tableName = $table->{"Tables_in_{$dbName}"};
+    $count = $connection->table($tableName)->count();
+    echo "  - {$tableName} ({$count} records)\n";
+}
+
+echo "\nMigration complete!\n";

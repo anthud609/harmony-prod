@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000011_create_messages_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateMessagesTable extends Migration
+class CreateMessagesTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('messages', function (Blueprint $table) {
+        $schema->create('messages', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->char('sender_id', 36)->index();
@@ -29,9 +27,12 @@ class CreateMessagesTable extends Migration
             $table->index('created_at');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('messages');
+        $schema->dropIfExists('messages');
     }
 }

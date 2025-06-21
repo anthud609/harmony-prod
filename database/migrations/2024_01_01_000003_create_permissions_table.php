@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000003_create_permissions_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreatePermissionsTable extends Migration
+class CreatePermissionsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('permissions', function (Blueprint $table) {
+        $schema->create('permissions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->string('name', 100)->unique(); // e.g., 'users.view', 'users.create'
@@ -27,9 +25,12 @@ class CreatePermissionsTable extends Migration
             $table->index(['module', 'action']);
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('permissions');
+        $schema->dropIfExists('permissions');
     }
 }

@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000006_create_user_permissions_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateUserPermissionsTable extends Migration
+class CreateUserPermissionsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('user_permissions', function (Blueprint $table) {
+        $schema->create('user_permissions', function (Blueprint $table) {
             $table->char('user_id', 36);
             $table->char('permission_id', 36);
             $table->boolean('is_granted')->default(true); // Can be used to explicitly deny
@@ -29,9 +27,12 @@ class CreateUserPermissionsTable extends Migration
             $table->index('expires_at');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('user_permissions');
+        $schema->dropIfExists('user_permissions');
     }
 }

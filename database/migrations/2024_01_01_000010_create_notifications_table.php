@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000010_create_notifications_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNotificationsTable extends Migration
+class CreateNotificationsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('notifications', function (Blueprint $table) {
+        $schema->create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->char('user_id', 36)->index();
@@ -31,9 +29,12 @@ class CreateNotificationsTable extends Migration
             $table->index('created_at');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('notifications');
+        $schema->dropIfExists('notifications');
     }
 }

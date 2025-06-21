@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000005_create_permission_role_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreatePermissionRoleTable extends Migration
+class CreatePermissionRoleTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('permission_role', function (Blueprint $table) {
+        $schema->create('permission_role', function (Blueprint $table) {
             $table->char('permission_id', 36);
             $table->char('role_id', 36);
             $table->timestamp('granted_at')->useCurrent();
@@ -26,9 +24,12 @@ class CreatePermissionRoleTable extends Migration
             $table->index('role_id');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('permission_role');
+        $schema->dropIfExists('permission_role');
     }
 }

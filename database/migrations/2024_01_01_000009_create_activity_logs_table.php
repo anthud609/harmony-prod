@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000009_create_activity_logs_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateActivityLogsTable extends Migration
+class CreateActivityLogsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('activity_logs', function (Blueprint $table) {
+        $schema->create('activity_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->char('user_id', 36)->nullable()->index();
@@ -34,9 +32,12 @@ class CreateActivityLogsTable extends Migration
             $table->index('performed_at');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('activity_logs');
+        $schema->dropIfExists('activity_logs');
     }
 }

@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000007_create_sessions_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateSessionsTable extends Migration
+class CreateSessionsTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('sessions', function (Blueprint $table) {
+        $schema->create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->char('user_id', 36)->nullable()->index();
             $table->string('ip_address', 45)->nullable();
@@ -22,9 +20,12 @@ class CreateSessionsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('sessions');
+        $schema->dropIfExists('sessions');
     }
 }

@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000002_create_roles_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateRolesTable extends Migration
+class CreateRolesTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('roles', function (Blueprint $table) {
+        $schema->create('roles', function (Blueprint $table) {
             $table->uuid('id')->primary();
             
             $table->string('name', 100)->unique();
@@ -22,16 +20,18 @@ class CreateRolesTable extends Migration
             $table->boolean('is_active')->default(true);
             
             $table->timestamps();
-            $this->addUserStamps($table);
             
             $table->index('name');
             $table->index('priority');
             $table->index('is_active');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('roles');
+        $schema->dropIfExists('roles');
     }
 }

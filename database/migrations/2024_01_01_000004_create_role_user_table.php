@@ -1,17 +1,15 @@
 <?php
-// File: database/migrations/2024_01_01_000004_create_role_user_table.php
-
-namespace Database\Migrations;
-
-use Illuminate\Support\Facades\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateRoleUserTable extends Migration
+class CreateRoleUserTable
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up($schema)
     {
-        Schema::create('role_user', function (Blueprint $table) {
+        $schema->create('role_user', function (Blueprint $table) {
             $table->char('role_id', 36);
             $table->char('user_id', 36);
             $table->timestamp('assigned_at')->useCurrent();
@@ -26,9 +24,12 @@ class CreateRoleUserTable extends Migration
             $table->index('user_id');
         });
     }
-    
-    public function down(): void
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down($schema)
     {
-        Schema::dropIfExists('role_user');
+        $schema->dropIfExists('role_user');
     }
 }

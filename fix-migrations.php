@@ -1,66 +1,96 @@
 <?php
-// File: fix-schema-calls.php
-// Fix Schema facade usage in migrations
+// File: fix-all-migrations.php
+// Run this to fix all migration files
 
 $migrationsPath = __DIR__ . '/database/migrations/';
 $files = glob($migrationsPath . '*.php');
 
-echo "Fixing Schema facade usage in migration files...\n\n";
+echo "Fixing migration files...\n\n";
 
 foreach ($files as $file) {
-    if (basename($file) === 'Migration.php') {
-        continue; // Skip the base class
+    $filename = basename($file);
+    
+    // Skip the base Migration.php file
+    if ($filename === 'Migration.php') {
+        unlink($file); // Remove the base Migration.php file as we don't need it
+        echo "Removed: {$filename} (not needed)\n";
+        continue;
     }
     
+    echo "Processing: {$filename}\n";
+    
+    // Read the file content
     $content = file_get_contents($file);
-    $originalContent = $content;
     
-    // Add the Schema facade import if not present
-    if (!preg_match('/use\s+Illuminate\\\\Support\\\\Facades\\\\Schema;/', $content)) {
-        // Add after the namespace declaration
-        $content = preg_replace(
-            '/(namespace[^;]+;)/',
-            "$1\n\nuse Illuminate\\Support\\Facades\\Schema;",
-            $content
-        );
-    }
-    
-    // Replace $this->schema-> with Schema::
-    $content = preg_replace('/\$this->schema->/', 'Schema::', $content);
-    
-    // Also ensure we have the Blueprint import
-    if (!preg_match('/use\s+Illuminate\\\\Database\\\\Schema\\\\Blueprint;/', $content)) {
-        // Add after the Schema import
-        $content = preg_replace(
-            '/(use\s+Illuminate\\\\Support\\\\Facades\\\\Schema;)/',
-            "$1\nuse Illuminate\\Database\\Schema\\Blueprint;",
-            $content
-        );
-    }
-    
-    // Check if file was modified
-    if ($content !== $originalContent) {
-        file_put_contents($file, $content);
-        echo "✓ Fixed: " . basename($file) . "\n";
+    // Extract the class name from the file content
+    if (preg_match('/class\s+(\w+)/', $content, $matches)) {
+        $className = $matches[1];
+        echo "  Found class: {$className}\n";
     } else {
-        echo "  No changes needed: " . basename($file) . "\n";
+        echo "  ERROR: Could not find class name\n";
+        continue;
     }
+    
+    // Create a clean migration file
+    $newContent = "<?php\n\n";
+    $newContent .= "use Illuminate\\Database\\Schema\\Blueprint;\n\n";
+    $newContent .= "class {$className}\n";
+    $newContent .= "{\n";
+    
+    // Extract the up method
+    if (preg_match('/public\s+function\s+up\s*\([^)]*\)\s*(?::\s*void)?\s*\{(.*?)\n    \}/s', $content, $upMatch)) {
+        $upBody = $upMatch[1];
+        // Replace Schema:: with $schema->
+        $upBody = str_replace('Schema::', '$schema->', $upBody);
+        // Replace $this->schema-> with $schema->
+        $upBody = str_replace('$this->schema->', '$schema->', $upBody);
+        
+        $newContent .= "    /**\n";
+        $newContent .= "     * Run the migrations.\n";
+        $newContent .= "     */\n";
+        $newContent .= "    public function up(\$schema)\n";
+        $newContent .= "    {" . $upBody . "\n";
+        $newContent .= "    }\n\n";
+    }
+    
+    // Extract the down method
+    if (preg_match('/public\s+function\s+down\s*\([^)]*\)\s*(?::\s*void)?\s*\{(.*?)\n    \}/s', $content, $downMatch)) {
+        $downBody = $downMatch[1];
+        // Replace Schema:: with $schema->
+        $downBody = str_replace('Schema::', '$schema->', $downBody);
+        // Replace $this->schema-> with $schema->
+        $downBody = str_replace('$this->schema->', '$schema->', $downBody);
+        
+        $newContent .= "    /**\n";
+        $newContent .= "     * Reverse the migrations.\n";
+        $newContent .= "     */\n";
+        $newContent .= "    public function down(\$schema)\n";
+        $newContent .= "    {" . $downBody . "\n";
+        $newContent .= "    }\n";
+    }
+    
+    $newContent .= "}\n";
+    
+    // Write the fixed content back
+    file_put_contents($file, $newContent);
+    
+    echo "  ✓ Fixed\n";
 }
 
-echo "\nChecking first migration file for any remaining issues...\n";
+echo "\nAll migration files have been fixed!\n";
 
-// Let's also check and show the first few lines of a migration to ensure it's correct
-$firstMigration = $migrationsPath . '2024_01_01_000001_create_users_table.php';
-if (file_exists($firstMigration)) {
-    $content = file_get_contents($firstMigration);
-    $lines = explode("\n", $content);
-    echo "\nFirst 20 lines of CreateUsersTable migration:\n";
-    echo "=" . str_repeat("=", 60) . "\n";
-    for ($i = 0; $i < min(20, count($lines)); $i++) {
-        echo sprintf("%2d: %s\n", $i + 1, $lines[$i]);
+// Also display what class names are expected
+echo "\nExpected class names for each migration:\n";
+$files = glob($migrationsPath . '*.php');
+foreach ($files as $file) {
+    $filename = basename($file, '.php');
+    $nameWithoutDate = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $filename);
+    $parts = explode('_', $nameWithoutDate);
+    $className = '';
+    foreach ($parts as $part) {
+        $className .= ucfirst($part);
     }
-    echo "=" . str_repeat("=", 60) . "\n";
+    echo "  {$filename} => {$className}\n";
 }
 
-echo "\nAll Schema calls have been fixed!\n";
-echo "You can now run: php database/migrate.php\n";
+echo "\nYou can now run: php database/migrate.php\n";
