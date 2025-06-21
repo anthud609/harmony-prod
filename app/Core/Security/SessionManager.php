@@ -16,12 +16,13 @@ class SessionManager
     private const LAST_ACTIVITY_KEY = '_last_activity';
     private const CREATED_TIME_KEY = '_created_time';
 
-    public function __construct()
-    {
-        // Load configuration
-        $this->sessionLifetime = config('session.lifetime', 360);
-        $this->sessionName = config('session.cookie', 'HARMONY_SESSID');
-    }
+public function __construct()
+{
+    // Load configuration - lifetime is in MINUTES in config
+    $lifetimeMinutes = config('session.lifetime', 120); // Default 2 hours
+    $this->sessionLifetime = $lifetimeMinutes * 60; // Convert to seconds
+    $this->sessionName = config('session.cookie', 'HARMONY_SESSID');
+}
 
     /**
      * Initialize secure session with proper configuration
@@ -120,21 +121,21 @@ class SessionManager
         ini_set('session.gc_divisor', (string)$lottery[1]);
     }
 
-    /**
-     * Check if current request is a session status check
-     */
-    private function isSessionStatusCheck(): bool
-    {
-        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-        $isStatusCheck = strpos($requestUri, '/api/session-status') !== false;
+private function isSessionStatusCheck(): bool
+{
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    // Check for the actual API endpoint path
+    $isStatusCheck = strpos($requestUri, '/api/session-status') !== false ||
+                     strpos($requestUri, 'session-status') !== false;
 
-        if ($isStatusCheck) {
-            $this->logDebug('Session status check detected - NOT updating activity');
-        }
-
-        return $isStatusCheck;
+    if ($isStatusCheck) {
+        $this->logDebug('Session status check detected - NOT updating activity', [
+            'uri' => $requestUri
+        ]);
     }
 
+    return $isStatusCheck;
+}
     /**
      * Regenerate session ID (prevent fixation attacks)
      */

@@ -58,8 +58,9 @@ $container->get(\Illuminate\Database\Capsule\Manager::class);
     // Load routes
     $router = $container->get(Router::class);
     require_once __DIR__ . '/../routes/web.php';
-    require_once __DIR__ . '/../routes/api.php';
-    
+// After loading web routes
+$apiRoutes = require __DIR__ . '/../routes/api.php';
+$router->addRoutes($apiRoutes);    
     // Create request from globals
     $request = Request::createFromGlobals();
     

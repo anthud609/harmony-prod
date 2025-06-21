@@ -87,8 +87,9 @@
         window.BASE_URL = '<?= base_url() ?>';
 // Debug Session Handler - Extensive Logging Version
 window.SessionHandler = {
-    warningTime: 60, // Show warning 1 minute before timeout
-    checkInterval: 5000, // Check every 5 seconds
+    warningTime: <?= config('session.warning_time', 5) * 60 ?>, // Convert minutes to seconds
+    checkInterval: 30000, // Check every 30 seconds instead of 5
+  
     warningShown: false,
     timer: null,
     sessionStartTime: Date.now(),
