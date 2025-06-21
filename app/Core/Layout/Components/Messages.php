@@ -1,11 +1,15 @@
 <?php
-
-// File: app/Core/Layout/Components/Messages.php
+// File: app/Core/Layout/Components/Messages.php (FIXED)
 
 namespace App\Core\Layout\Components;
 
+use App\Modules\IAM\Models\Message;
+use App\Core\Traits\LoggerTrait;
+
 class Messages
 {
+    use LoggerTrait;
+
     public function render(array $data = []): void
     {
         $this->renderDropdown($data);
@@ -13,8 +17,13 @@ class Messages
 
     public function renderDropdown(array $data = []): void
     {
-        $messages = $this->getMessages($data);
-        $unreadCount = $data['user']['messageCount'] ?? count(array_filter($messages, fn ($m) => ! $m['read']));
+        $user = $data['user'] ?? [];
+        $userId = $user['id'] ?? null;
+        
+        // Get messages from database
+        $messages = $this->getMessages($userId);
+        $unreadCount = $this->getUnreadCount($userId);
+        
         ?>
         <!-- Messages -->
         <div class="relative">
@@ -36,9 +45,15 @@ class Messages
                     </div>
                 </div>
                 <div class="max-h-96 overflow-y-auto">
-                    <?php foreach ($messages as $message) : ?>
-                        <?php $this->renderMessageItem($message); ?>
-                    <?php endforeach; ?>
+                    <?php if (empty($messages)) : ?>
+                        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
+                            <p>No messages</p>
+                        </div>
+                    <?php else : ?>
+                        <?php foreach ($messages as $message) : ?>
+                            <?php $this->renderMessageItem($message); ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -49,58 +64,157 @@ class Messages
     {
         ?>
         <a href="<?= $message['url'] ?? '#' ?>" 
-           class="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700">
-            <div class="w-10 h-10 bg-gradient-to-br <?= $message['avatar']['gradient'] ?> rounded-full flex items-center justify-center text-white font-medium mr-3 flex-shrink-0">
-                <?= $message['avatar']['initials'] ?>
+           class="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 <?= !$message['is_read'] ? 'bg-blue-50 dark:bg-blue-900/20' : '' ?>">
+            <div class="w-10 h-10 bg-gradient-to-br <?= e($message['avatar']['gradient']) ?> rounded-full flex items-center justify-center text-white font-medium mr-3 flex-shrink-0">
+                <?= e($message['avatar']['initials']) ?>
             </div>
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between mb-1">
                     <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"><?= e($message['sender']) ?></h4>
-                    <span class="text-xs text-gray-500 dark:text-gray-400"><?= $message['time'] ?></span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400"><?= e($message['time']) ?></span>
                 </div>
                 <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2"><?= e($message['preview']) ?></p>
+                <?php if (!$message['is_read']) : ?>
+                    <div class="mt-1">
+                        <span class="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                    </div>
+                <?php endif; ?>
             </div>
         </a>
         <?php
     }
 
-    private function getMessages(array $data): array
+    /**
+     * Get messages from database
+     */
+    private function getMessages(?string $userId, int $limit = 5): array
     {
-        // In a real app, this would come from database
-        return [
-            [
-                'id' => 1,
-                'sender' => 'Jane Doe',
-                'preview' => 'Hey, can you review the Q4 report before the meeting tomorrow?',
-                'time' => '5m ago',
-                'read' => false,
-                'avatar' => [
-                    'initials' => 'JD',
-                    'gradient' => 'from-green-400 to-blue-500',
-                ],
-            ],
-            [
-                'id' => 2,
-                'sender' => 'Mark Robinson',
-                'preview' => 'The new employee onboarding process has been updated. Please check...',
-                'time' => '1h ago',
-                'read' => false,
-                'avatar' => [
-                    'initials' => 'MR',
-                    'gradient' => 'from-purple-400 to-pink-500',
-                ],
-            ],
-            [
-                'id' => 3,
-                'sender' => 'Sarah Thompson',
-                'preview' => 'Thanks for your help with the payroll issue!',
-                'time' => '2h ago',
-                'read' => true,
-                'avatar' => [
-                    'initials' => 'ST',
-                    'gradient' => 'from-orange-400 to-red-500',
-                ],
-            ],
+        if (!$userId) {
+            return [];
+        }
+
+        try {
+            // Get recent messages from database
+            $messages = Message::with('sender')
+                ->where('recipient_id', $userId)
+                ->where('is_archived', false)
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
+
+            // Format for frontend
+            return $messages->map(function ($message) {
+                return [
+                    'id' => $message->id,
+                    'sender' => $message->sender->full_name ?? $message->sender->first_name . ' ' . $message->sender->last_name,
+                    'preview' => $message->preview ?? substr(strip_tags($message->body), 0, 100) . '...',
+                    'time' => $this->formatTime($message->created_at),
+                    'is_read' => $message->is_read,
+                    'url' => '/messages/' . $message->id,
+                    'avatar' => [
+                        'initials' => $this->getInitials($message->sender),
+                        'gradient' => $this->getAvatarGradient($message->sender->id)
+                    ]
+                ];
+            })->toArray();
+
+        } catch (\Exception $e) {
+            $this->logError('Failed to load messages for header', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Return fallback data
+            return [];
+        }
+    }
+
+    /**
+     * Get unread message count
+     */
+    private function getUnreadCount(?string $userId): int
+    {
+        if (!$userId) {
+            return 0;
+        }
+
+        try {
+            return Message::where('recipient_id', $userId)
+                ->where('is_read', false)
+                ->where('is_archived', false)
+                ->count();
+                
+        } catch (\Exception $e) {
+            $this->logError('Failed to get unread message count', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * Get user initials
+     */
+    private function getInitials($user): string
+    {
+        if (!$user) {
+            return 'U';
+        }
+        
+        $firstName = $user->first_name ?? '';
+        $lastName = $user->last_name ?? '';
+        
+        return strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+    }
+
+    /**
+     * Get avatar gradient based on user ID
+     */
+    private function getAvatarGradient(string $userId): string
+    {
+        $gradients = [
+            'from-green-400 to-blue-500',
+            'from-purple-400 to-pink-500',
+            'from-orange-400 to-red-500',
+            'from-indigo-400 to-purple-500',
+            'from-blue-400 to-cyan-500',
+            'from-pink-400 to-red-500',
+            'from-yellow-400 to-orange-500',
+            'from-teal-400 to-green-500',
         ];
+        
+        // Use user ID to consistently pick a gradient
+        $index = hexdec(substr(md5($userId), 0, 2)) % count($gradients);
+        return $gradients[$index];
+    }
+
+    /**
+     * Format time difference
+     */
+    private function formatTime($timestamp): string
+    {
+        if (!$timestamp) {
+            return 'just now';
+        }
+
+        $now = new \DateTime();
+        $time = $timestamp instanceof \DateTime ? $timestamp : new \DateTime($timestamp);
+        $diff = $now->getTimestamp() - $time->getTimestamp();
+
+        if ($diff < 60) {
+            return 'just now';
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return $minutes . 'm ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . 'h ago';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return $days . 'd ago';
+        } else {
+            return $time->format('M j');
+        }
     }
 }
