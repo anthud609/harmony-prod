@@ -8,7 +8,8 @@ $basePath = dirname(__DIR__);
 
 // First, require composer autoload
 require $basePath . '/vendor/autoload.php';
-
+// Initialize database
+require __DIR__ . '/database.php';
 // Register a simple PSR-4 autoloader for App namespace
 spl_autoload_register(function ($class) use ($basePath) {
     // Only handle App namespace

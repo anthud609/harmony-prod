@@ -2,7 +2,14 @@
     "require": {
         "vlucas/phpdotenv": "^5.6",
         "php-di/php-di": "^7.0",
-        "monolog/monolog": "^3.9"
+        "monolog/monolog": "^3.9",
+        "illuminate/database": "^12.19",
+        "illuminate/events": "^12.19",
+        "illuminate/container": "^12.19",
+        "illuminate/pagination": "^12.19",
+        "illuminate/validation": "^12.19",
+        "ramsey/uuid": "^4.8",
+        "symfony/console": "^7.3"
     },
     "autoload": {
         "psr-4": {
