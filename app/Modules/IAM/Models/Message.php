@@ -1,199 +1,131 @@
 <?php
-// File: app/Modules/IAM/Models/Message.php
+
+
+// Update the existing Message model to include new relationships:
+
+// File: app/Modules/IAM/Models/Message.php (Updated)
 
 namespace App\Modules\IAM\Models;
 
 use App\Core\Database\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Message extends BaseModel
 {
+    use SoftDeletes;
+
+    protected $table = 'messages';
+
     protected $fillable = [
+        'chat_id',
         'sender_id',
-        'recipient_id',
-        'subject',
+        'reply_to_id',
         'body',
-        'preview',
-        'is_read',
-        'is_archived',
+        'type', // 'text', 'image', 'file', 'system'
+        'is_edited',
+        'edited_at',
         'read_at',
-        'archived_at',
-        'priority',
-        'type',
-        'attachments',
-        'metadata'
+        'delivered_at',
     ];
-    
+
     protected $casts = [
-        'is_read' => 'boolean',
-        'is_archived' => 'boolean',
+        'is_edited' => 'boolean',
+        'edited_at' => 'datetime',
         'read_at' => 'datetime',
-        'archived_at' => 'datetime',
-        'attachments' => 'array',
-        'metadata' => 'array'
+        'delivered_at' => 'datetime',
+        'created_at' => 'datetime',
     ];
-    
-    protected $appends = ['time', 'preview', 'avatar'];
-    
+
     /**
-     * Message sender
+     * Get chat
+     */
+    public function chat(): BelongsTo
+    {
+        return $this->belongsTo(Chat::class);
+    }
+
+    /**
+     * Get sender
      */
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
-    
-    /**
-     * Message recipient
-     */
-    public function recipient(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'recipient_id');
-    }
-    
-    /**
-     * Get formatted time for display
-     */
-    public function getTimeAttribute(): string
-    {
-        if (!$this->created_at) {
-            return 'just now';
-        }
 
-        $now = new \DateTime();
-        $time = $this->created_at;
-        $diff = $now->getTimestamp() - $time->getTimestamp();
-
-        if ($diff < 60) {
-            return 'just now';
-        } elseif ($diff < 3600) {
-            $minutes = floor($diff / 60);
-            return $minutes . 'm ago';
-        } elseif ($diff < 86400) {
-            $hours = floor($diff / 3600);
-            return $hours . 'h ago';
-        } elseif ($diff < 604800) {
-            $days = floor($diff / 86400);
-            return $days . 'd ago';
-        } else {
-            return $time->format('M j');
-        }
-    }
-    
     /**
-     * Get message preview
+     * Get message being replied to
+     */
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'reply_to_id');
+    }
+
+    /**
+     * Get reactions
+     */
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(MessageReaction::class);
+    }
+
+    /**
+     * Get attachments
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(MessageAttachment::class);
+    }
+
+    /**
+     * Get preview text
      */
     public function getPreviewAttribute(): string
     {
-        // If preview is already set, use it
-        if (!empty($this->attributes['preview'])) {
-            return $this->attributes['preview'];
+        $text = strip_tags($this->body);
+        if (strlen($text) > 100) {
+            return substr($text, 0, 100) . '...';
         }
+        return $text;
+    }
+
+    /**
+     * Get time display
+     */
+    public function getTimeAttribute(): string
+    {
+        $now = now();
+        $created = $this->created_at;
         
-        // Otherwise generate from body
-        $text = strip_tags($this->body ?? '');
-        return substr($text, 0, 100) . (strlen($text) > 100 ? '...' : '');
-    }
-    
-    /**
-     * Get avatar data for sender
-     */
-    public function getAvatarAttribute(): array
-    {
-        if (!$this->sender) {
-            return [
-                'initials' => 'U',
-                'gradient' => 'from-gray-400 to-gray-500'
-            ];
+        if ($created->isToday()) {
+            return $created->format('g:i A');
+        } elseif ($created->isYesterday()) {
+            return 'Yesterday';
+        } elseif ($created->diffInDays($now) < 7) {
+            return $created->format('l'); // Day name
+        } else {
+            return $created->format('M j');
         }
-        
-        return [
-            'initials' => $this->sender->initials,
-            'gradient' => $this->getAvatarGradient($this->sender->id)
-        ];
     }
-    
+
     /**
-     * Get avatar gradient based on user ID
+     * Mark as read
      */
-    private function getAvatarGradient(string $userId): string
+    public function markAsRead(): void
     {
-        $gradients = [
-            'from-green-400 to-blue-500',
-            'from-purple-400 to-pink-500',
-            'from-orange-400 to-red-500',
-            'from-indigo-400 to-purple-500',
-            'from-blue-400 to-cyan-500',
-            'from-pink-400 to-red-500',
-            'from-yellow-400 to-orange-500',
-            'from-teal-400 to-green-500',
-        ];
-        
-        // Use user ID to consistently pick a gradient
-        $index = hexdec(substr(md5($userId), 0, 2)) % count($gradients);
-        return $gradients[$index];
-    }
-    
-    /**
-     * Scope for unread messages
-     */
-    public function scopeUnread($query)
-    {
-        return $query->where('is_read', false);
-    }
-    
-    /**
-     * Scope for archived messages
-     */
-    public function scopeArchived($query)
-    {
-        return $query->where('is_archived', true);
-    }
-    
-    /**
-     * Scope for inbox (not archived)
-     */
-    public function scopeInbox($query)
-    {
-        return $query->where('is_archived', false);
-    }
-    
-    /**
-     * Mark message as read
-     */
-    public function markAsRead(): bool
-    {
-        if (!$this->is_read) {
-            $this->is_read = true;
-            $this->read_at = now();
-            return $this->save();
+        if (!$this->read_at) {
+            $this->update(['read_at' => now()]);
         }
-        return true;
     }
-    
+
     /**
-     * Archive message
+     * Mark as delivered
      */
-    public function archive(): bool
+    public function markAsDelivered(): void
     {
-        if (!$this->is_archived) {
-            $this->is_archived = true;
-            $this->archived_at = now();
-            return $this->save();
+        if (!$this->delivered_at) {
+            $this->update(['delivered_at' => now()]);
         }
-        return true;
-    }
-    
-    /**
-     * Unarchive message
-     */
-    public function unarchive(): bool
-    {
-        if ($this->is_archived) {
-            $this->is_archived = false;
-            $this->archived_at = null;
-            return $this->save();
-        }
-        return true;
     }
 }

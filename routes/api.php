@@ -6,6 +6,7 @@ use App\Core\Api\Controllers\SearchController;
 use App\Core\Api\Controllers\NotificationsController;
 use App\Core\Api\Controllers\MessagesController;
 use App\Core\Api\Controllers\HealthCheckController;
+use App\Core\Api\Controllers\ChatController;
 
 return [
     // Health check
@@ -23,7 +24,16 @@ return [
     '/api/notifications/mark-viewed' => [NotificationsController::class, 'markAsViewed'],
     '/api/notifications/mark-all-read' => [NotificationsController::class, 'markAllRead'],
     
-    // Messages
+   // Chat API endpoints
+    '/api/messages/send' => [ChatController::class, 'sendMessage'],
+    '/api/messages/search' => [ChatController::class, 'searchMessages'],
+    '/api/chats/create' => [ChatController::class, 'createChat'],
+    '/api/chats/pin' => [ChatController::class, 'togglePinChat'],
+    '/api/messages/react' => [ChatController::class, 'addReaction'],
+    '/api/chats/typing' => [ChatController::class, 'updateTypingStatus'],
+    
+    // Get messages and notifications for header dropdowns
     '/api/messages' => [MessagesController::class, 'getMessages'],
     '/api/messages/mark-read' => [MessagesController::class, 'markAsRead'],
+    
 ];
