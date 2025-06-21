@@ -7,10 +7,9 @@ use App\Core\Http\Request;
 use App\Core\Http\Response;
 use App\Core\Layout\LayoutManager;
 use App\Core\Security\SessionManager;
-use App\Modules\IAM\Models\Message;
-use App\Modules\IAM\Models\Chat;
-use App\Modules\IAM\Models\ChatParticipant;
 use App\Core\Traits\LoggerTrait;
+use App\Modules\IAM\Models\Message;
+use App\Modules\IAM\Models\User;
 
 class InboxController
 {
@@ -27,9 +26,6 @@ class InboxController
         $this->sessionManager = $sessionManager;
     }
 
-    /**
-     * Display inbox view
-     */
     public function index(Request $request): Response
     {
         // Check if user is logged in
@@ -37,47 +33,39 @@ class InboxController
             return (new Response())->redirect('/login');
         }
 
+        // Get user from session
         $user = $this->sessionManager->getUser();
-        $userId = $user['id'];
-        
-        // Get current chat if specified
-        $currentChatId = $request->getQuery('chat');
-        $currentChat = null;
-        $messages = [];
-        
-        if ($currentChatId) {
-            $currentChat = $this->getChatDetails($currentChatId, $userId);
-            if ($currentChat) {
-                $messages = $this->getChatMessages($currentChatId, $userId);
-                // Mark messages as read
-                $this->markMessagesAsRead($currentChatId, $userId);
-            }
+        $userId = $user['id'] ?? null;
+
+        if (!$userId) {
+            $this->logError('User ID not found in session');
+            return (new Response())->redirect('/login');
         }
 
-        // Get user's chats
-        $pinnedChats = $this->getPinnedChats($userId);
-        $recentChats = $this->getRecentChats($userId);
-        $groupChats = $this->getGroupChats($userId);
+        // Get conversations (grouped messages)
+        $conversations = $this->getConversations($userId);
+        $pinnedConversations = array_filter($conversations, fn($conv) => $conv['isPinned'] ?? false);
+        $recentConversations = array_filter($conversations, fn($conv) => !($conv['isPinned'] ?? false));
 
-        // Prepare data for view
+        // Prepare data for the view
         $data = [
             'title' => 'Messages – Harmony HRMS',
             'pageTitle' => 'Messages',
-            'pageDescription' => 'Connect with your team',
-            'currentChat' => $currentChat,
-            'messages' => $messages,
-            'pinnedChats' => $pinnedChats,
-            'recentChats' => $recentChats,
-            'groupChats' => $groupChats,
-            'pageId' => 'inbox',
-            'isFavorite' => in_array('inbox', $user['favorites'] ?? []),
+            'pageDescription' => 'Manage your conversations and messages',
+            'pinnedChats' => array_values($pinnedConversations),
+            'recentChats' => array_values($recentConversations),
+            'totalUnread' => $this->getTotalUnreadCount($userId),
+            'helpLink' => 'https://docs.harmonyhrms.com/messages',
+            'pageId' => 'messages',
+            'isFavorite' => in_array('messages', $user['favorites'] ?? []),
         ];
 
-        // Set breadcrumbs
+        // Set breadcrumbs and actions
         $breadcrumbs = [
             ['label' => 'Home', 'url' => '/'],
             ['label' => 'Messages'],
         ];
+        $pageActions = $this->getPageActions();
 
         // Capture layout output
         ob_start();
@@ -85,6 +73,7 @@ class InboxController
             ->setLayout('main')
             ->with($data)
             ->setBreadcrumbs($breadcrumbs)
+            ->setPageActions($pageActions)
             ->render(__DIR__ . '/../Views/inbox.php');
         $content = ob_get_clean();
 
@@ -94,349 +83,208 @@ class InboxController
             ->setContent($content);
     }
 
-    /**
-     * Get pinned chats
-     */
-    private function getPinnedChats(string $userId): array
+    private function getConversations(string $userId): array
     {
         try {
-            return Chat::with(['participants.user', 'lastMessage.sender'])
-                ->whereHas('participants', function($query) use ($userId) {
-                    $query->where('user_id', $userId)
-                          ->where('is_pinned', true);
+            // Get all unique conversations
+            $conversations = [];
+            
+            // Get all messages where user is sender or recipient
+            $messages = Message::with(['sender', 'recipient'])
+                ->where(function ($query) use ($userId) {
+                    $query->where('sender_id', $userId)
+                          ->orWhere('recipient_id', $userId);
                 })
-                ->orderBy('last_message_at', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function($chat) use ($userId) {
-                    return $this->formatChatItem($chat, $userId);
-                })
-                ->toArray();
-        } catch (\Exception $e) {
-            $this->logError('Failed to get pinned chats', [
-                'userId' => $userId,
-                'error' => $e->getMessage()
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Get recent chats
-     */
-    private function getRecentChats(string $userId): array
-    {
-        try {
-            return Chat::with(['participants.user', 'lastMessage.sender'])
-                ->whereHas('participants', function($query) use ($userId) {
-                    $query->where('user_id', $userId)
-                          ->where('is_pinned', false);
-                })
-                ->orderBy('last_message_at', 'desc')
-                ->limit(20)
-                ->get()
-                ->map(function($chat) use ($userId) {
-                    return $this->formatChatItem($chat, $userId);
-                })
-                ->toArray();
-        } catch (\Exception $e) {
-            $this->logError('Failed to get recent chats', [
-                'userId' => $userId,
-                'error' => $e->getMessage()
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Get group chats
-     */
-    private function getGroupChats(string $userId): array
-    {
-        try {
-            return Chat::with(['participants.user', 'lastMessage.sender'])
-                ->where('type', 'group')
-                ->whereHas('participants', function($query) use ($userId) {
-                    $query->where('user_id', $userId);
-                })
-                ->orderBy('last_message_at', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function($chat) use ($userId) {
-                    return $this->formatChatItem($chat, $userId);
-                })
-                ->toArray();
-        } catch (\Exception $e) {
-            $this->logError('Failed to get group chats', [
-                'userId' => $userId,
-                'error' => $e->getMessage()
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Format chat item for display
-     */
-    private function formatChatItem($chat, string $userId): array
-    {
-        $participant = $chat->participants->where('user_id', $userId)->first();
-        $otherParticipants = $chat->participants->where('user_id', '!=', $userId);
-        
-        // Determine display name and avatar
-        if ($chat->type === 'group') {
-            $name = $chat->name;
-            $initials = $this->getGroupInitials($name);
-            $gradient = $this->getGradient($chat->id);
-            $online = false;
-        } else {
-            // Direct message - get other user
-            $otherUser = $otherParticipants->first()->user;
-            $name = $otherUser->full_name;
-            $initials = $this->getInitials($otherUser);
-            $gradient = $this->getGradient($otherUser->id);
-            $online = $this->isUserOnline($otherUser);
-        }
-
-        // Get last message info
-        $lastMessage = $chat->lastMessage;
-        $lastMessageText = '';
-        $lastMessageFrom = null;
-        $time = '';
-
-        if ($lastMessage) {
-            $lastMessageText = $this->truncateMessage($lastMessage->body);
-            if ($chat->type === 'group' && $lastMessage->sender_id !== $userId) {
-                $lastMessageFrom = $lastMessage->sender->first_name;
-            }
-            $time = $this->formatMessageTime($lastMessage->created_at);
-        }
-
-        return [
-            'id' => $chat->id,
-            'type' => $chat->type,
-            'name' => $name,
-            'initials' => $initials,
-            'gradient' => $gradient,
-            'online' => $online,
-            'lastMessage' => $lastMessageText,
-            'lastMessageFrom' => $lastMessageFrom,
-            'time' => $time,
-            'unread' => $participant->unread_count ?? 0,
-            'muted' => $participant->is_muted ?? false,
-            'pinned' => $participant->is_pinned ?? false,
-            'typing' => false, // Would be updated via real-time
-            'active' => false, // Set by frontend
-            'memberCount' => $chat->type === 'group' ? $chat->participants->count() : null
-        ];
-    }
-
-    /**
-     * Get chat details
-     */
-    private function getChatDetails(string $chatId, string $userId): ?array
-    {
-        try {
-            $chat = Chat::with(['participants.user'])
-                ->whereHas('participants', function($query) use ($userId) {
-                    $query->where('user_id', $userId);
-                })
-                ->find($chatId);
-
-            if (!$chat) {
-                return null;
-            }
-
-            $otherParticipants = $chat->participants->where('user_id', '!=', $userId);
-
-            if ($chat->type === 'group') {
-                return [
-                    'id' => $chat->id,
-                    'type' => 'group',
-                    'name' => $chat->name,
-                    'gradient' => $this->getGradient($chat->id),
-                    'memberCount' => $chat->participants->count(),
-                    'status' => 'Active group',
-                    'verified' => false
-                ];
-            } else {
-                $otherUser = $otherParticipants->first()->user;
-                return [
-                    'id' => $chat->id,
-                    'type' => 'direct',
-                    'name' => $otherUser->full_name,
-                    'initials' => $this->getInitials($otherUser),
-                    'gradient' => $this->getGradient($otherUser->id),
-                    'status' => $this->getUserStatus($otherUser),
-                    'verified' => $otherUser->verified ?? false
-                ];
-            }
-        } catch (\Exception $e) {
-            $this->logError('Failed to get chat details', [
-                'chatId' => $chatId,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
-    }
-
-    /**
-     * Get chat messages
-     */
-    private function getChatMessages(string $chatId, string $userId): array
-    {
-        try {
-            $messages = Message::with(['sender', 'replyTo', 'attachments', 'reactions.user'])
-                ->where('chat_id', $chatId)
-                ->orderBy('created_at', 'asc')
-                ->limit(50) // Get last 50 messages
+                ->orderBy('created_at', 'desc')
                 ->get();
 
-            $previousSenderId = null;
-            return $messages->map(function($message) use ($userId, &$previousSenderId) {
-                $showName = $message->sender_id !== $previousSenderId && $message->sender_id !== $userId;
-                $previousSenderId = $message->sender_id;
+            // Group messages by conversation (between two users)
+            $groupedMessages = [];
+            foreach ($messages as $message) {
+                // Create a unique key for the conversation
+                $otherUserId = $message->sender_id === $userId ? $message->recipient_id : $message->sender_id;
+                $conversationKey = $otherUserId;
+                
+                if (!isset($groupedMessages[$conversationKey])) {
+                    $groupedMessages[$conversationKey] = [];
+                }
+                $groupedMessages[$conversationKey][] = $message;
+            }
 
-                return [
-                    'id' => $message->id,
-                    'senderId' => $message->sender_id,
-                    'senderName' => $message->sender->full_name,
-                    'senderInitials' => $this->getInitials($message->sender),
-                    'senderGradient' => $this->getGradient($message->sender_id),
-                    'text' => $message->body,
-                    'time' => $message->created_at->format('g:i A'),
-                    'showName' => $showName,
-                    'read' => $message->read_at !== null,
-                    'delivered' => true,
-                    'replyTo' => $message->replyTo ? [
-                        'text' => $this->truncateMessage($message->replyTo->body, 50)
-                    ] : null,
-                    'attachments' => $message->attachments->map(function($attachment) {
-                        return [
-                            'id' => $attachment->id,
-                            'type' => $attachment->type,
-                            'name' => $attachment->name,
-                            'url' => $attachment->url
-                        ];
-                    })->toArray(),
-                    'reactions' => $message->reactions->groupBy('emoji')->map(function($group, $emoji) {
-                        return [
-                            'emoji' => $emoji,
-                            'count' => $group->count()
-                        ];
-                    })->values()->toArray()
+            // Format each conversation
+            foreach ($groupedMessages as $otherUserId => $conversationMessages) {
+                // Get the latest message
+                $latestMessage = $conversationMessages[0];
+                
+                // Get the other user
+                $otherUser = User::find($otherUserId);
+                if (!$otherUser) {
+                    continue; // Skip if user not found
+                }
+
+                // Count unread messages in this conversation
+                $unreadCount = 0;
+                foreach ($conversationMessages as $msg) {
+                    if ($msg->recipient_id === $userId && !$msg->is_read) {
+                        $unreadCount++;
+                    }
+                }
+
+                $conversations[] = [
+                    'id' => $otherUserId, // Use other user's ID as conversation ID
+                    'user' => [
+                        'name' => $otherUser->full_name ?? $otherUser->first_name . ' ' . $otherUser->last_name,
+                        'avatar' => [
+                            'initials' => $this->getInitials($otherUser),
+                            'gradient' => $this->getGradient($otherUser->id)
+                        ],
+                        'status' => 'offline', // You can implement online status later
+                        'department' => $otherUser->department->name ?? 'Unknown'
+                    ],
+                    'lastMessage' => [
+                        'text' => $latestMessage->body ? substr(strip_tags($latestMessage->body), 0, 50) . '...' : 'No message',
+                        'time' => $this->formatTime($latestMessage->created_at),
+                        'isUnread' => !$latestMessage->is_read && $latestMessage->recipient_id === $userId
+                    ],
+                    'unreadCount' => $unreadCount,
+                    'isPinned' => $latestMessage->is_pinned ?? false,
+                    'url' => '/messages/conversation/' . $otherUserId,
+                    'lastMessageTime' => $latestMessage->created_at // For sorting
                 ];
-            })->toArray();
+            }
+
+            // Sort conversations by last message time
+            usort($conversations, function($a, $b) {
+                return $b['lastMessageTime'] <=> $a['lastMessageTime'];
+            });
+
+            // Remove the temporary sorting field
+            foreach ($conversations as &$conv) {
+                unset($conv['lastMessageTime']);
+            }
+
+            return $conversations;
+            
         } catch (\Exception $e) {
-            $this->logError('Failed to get chat messages', [
-                'chatId' => $chatId,
-                'error' => $e->getMessage()
+            $this->logError('Failed to fetch conversations', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId
             ]);
             return [];
         }
     }
 
-    /**
-     * Mark messages as read
-     */
-    private function markMessagesAsRead(string $chatId, string $userId): void
+    private function getTotalUnreadCount(string $userId): int
     {
         try {
-            Message::where('chat_id', $chatId)
-                ->where('sender_id', '!=', $userId)
-                ->whereNull('read_at')
-                ->update(['read_at' => now()]);
-
-            // Update unread count for participant
-            ChatParticipant::where('chat_id', $chatId)
-                ->where('user_id', $userId)
-                ->update(['unread_count' => 0]);
+            return Message::where('recipient_id', $userId)
+                ->where('is_read', false)
+                ->where('is_archived', false)
+                ->count();
         } catch (\Exception $e) {
-            $this->logError('Failed to mark messages as read', [
-                'chatId' => $chatId,
-                'userId' => $userId,
-                'error' => $e->getMessage()
+            $this->logError('Failed to get unread count', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId
             ]);
+            return 0;
         }
     }
 
-    /**
-     * Helper methods
-     */
+    private function getPageActions(): array
+    {
+        return [
+            [
+                'label' => 'New Message',
+                'icon' => 'fas fa-plus',
+                'variant' => 'primary',
+                'onclick' => 'openNewMessageModal(); return false;',
+            ],
+            [
+                'type' => 'dropdown',
+                'id' => 'inbox-actions',
+                'label' => 'Actions',
+                'icon' => 'fas fa-ellipsis-h',
+                'variant' => 'secondary',
+                'items' => [
+                    [
+                        'label' => 'Mark All Read',
+                        'icon' => 'fas fa-envelope-open',
+                        'onclick' => 'markAllAsRead(); return false;',
+                    ],
+                    [
+                        'label' => 'Archive All',
+                        'icon' => 'fas fa-archive',
+                        'onclick' => 'archiveAll(); return false;',
+                    ],
+                    'divider',
+                    [
+                        'label' => 'Settings',
+                        'icon' => 'fas fa-cog',
+                        'url' => '/settings/notifications',
+                    ],
+                ],
+            ],
+        ];
+    }
+
     private function getInitials($user): string
     {
-        return strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1));
-    }
-
-    private function getGroupInitials(string $name): string
-    {
-        $words = explode(' ', $name);
-        if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+        if (!$user) {
+            return 'U';
         }
-        return strtoupper(substr($name, 0, 2));
+        
+        $firstName = $user->first_name ?? '';
+        $lastName = $user->last_name ?? '';
+        
+        if (empty($firstName) && empty($lastName)) {
+            return 'U';
+        }
+        
+        return strtoupper(
+            substr($firstName, 0, 1) . 
+            substr($lastName, 0, 1)
+        );
     }
 
-    private function getGradient(string $id): string
+    private function getGradient(string $userId): string
     {
         $gradients = [
-            'from-blue-400 to-indigo-600',
-            'from-green-400 to-teal-600',
-            'from-purple-400 to-pink-600',
-            'from-orange-400 to-red-600',
-            'from-yellow-400 to-orange-600',
-            'from-indigo-400 to-purple-600',
-            'from-pink-400 to-rose-600',
-            'from-teal-400 to-cyan-600',
+            'from-blue-400 to-blue-600',
+            'from-green-400 to-green-600',
+            'from-purple-400 to-purple-600',
+            'from-red-400 to-red-600',
+            'from-yellow-400 to-yellow-600',
+            'from-pink-400 to-pink-600',
+            'from-indigo-400 to-indigo-600',
+            'from-gray-400 to-gray-600',
         ];
         
-        $index = hexdec(substr(md5($id), 0, 2)) % count($gradients);
+        // Use a hash of the user ID to consistently pick a gradient
+        $index = hexdec(substr(md5($userId), 0, 2)) % count($gradients);
         return $gradients[$index];
     }
 
-    private function isUserOnline($user): bool
+    private function formatTime($timestamp): string
     {
-        // Check if user was active in last 5 minutes
-        if (!$user->last_activity_at) {
-            return false;
+        if (!$timestamp) {
+            return '';
         }
-        
-        return $user->last_activity_at->diffInMinutes(now()) <= 5;
-    }
 
-    private function getUserStatus($user): string
-    {
-        if ($this->isUserOnline($user)) {
-            return 'Active now';
-        }
-        
-        if ($user->last_activity_at) {
-            return 'Last seen ' . $user->last_activity_at->diffForHumans();
-        }
-        
-        return $user->job_title ?? 'Team member';
-    }
-
-    private function truncateMessage(string $message, int $length = 60): string
-    {
-        $message = strip_tags($message);
-        if (strlen($message) > $length) {
-            return substr($message, 0, $length) . '...';
-        }
-        return $message;
-    }
-
-    private function formatMessageTime($timestamp): string
-    {
-        $now = now();
+        $now = new \DateTime();
         $time = $timestamp instanceof \DateTime ? $timestamp : new \DateTime($timestamp);
-        
-        if ($time->format('Y-m-d') === $now->format('Y-m-d')) {
-            return $time->format('g:i A');
-        } elseif ($time->format('Y-m-d') === $now->subDay()->format('Y-m-d')) {
-            return 'Yesterday';
-        } elseif ($time->diffInDays($now) < 7) {
-            return $time->format('l'); // Day name
+        $diff = $now->getTimestamp() - $time->getTimestamp();
+
+        if ($diff < 60) {
+            return 'just now';
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return $minutes . 'm ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . 'h ago';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return $days . 'd ago';
         } else {
             return $time->format('M j');
         }

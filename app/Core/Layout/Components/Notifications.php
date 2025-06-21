@@ -1,5 +1,5 @@
 <?php
-// File: app/Core/Layout/Components/Notifications.php (FIXED - NO MOCK DATA)
+// File: app/Core/Layout/Components/Notifications.php (FIXED - NO DELETED_AT)
 
 namespace App\Core\Layout\Components;
 
@@ -99,13 +99,12 @@ class Notifications
     }
 
     /**
-     * Get notifications from database - NO MOCK DATA
+     * Get notifications from database - NO DELETED_AT CHECK
      */
     private function getNotifications(string $userId, int $limit = 10): array
     {
-        // IMPORTANT: Only get from notifications table, not messages
+        // Get notifications without checking deleted_at since the column doesn't exist
         $notifications = Notification::where('user_id', $userId)
-            ->whereNull('deleted_at') // Ensure not deleted
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
@@ -133,7 +132,7 @@ class Notifications
                 'type' => $notification->type,
                 'icon' => $displayData['icon'],
                 'color' => $displayData['color'],
-                'message' => $notification->message, // This should be plain text notification message
+                'message' => $notification->message,
                 'time' => $this->formatTime($notification->created_at),
                 'is_read' => (bool)$notification->is_read,
                 'url' => $notification->url ?? null,
@@ -142,13 +141,12 @@ class Notifications
     }
 
     /**
-     * Get unread notification count - NO MOCK DATA
+     * Get unread notification count - NO DELETED_AT CHECK
      */
     private function getUnreadCount(string $userId): int
     {
         return Notification::where('user_id', $userId)
             ->where('is_read', false)
-            ->whereNull('deleted_at')
             ->count();
     }
 

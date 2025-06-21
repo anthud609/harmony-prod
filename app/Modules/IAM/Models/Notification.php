@@ -1,18 +1,18 @@
 <?php
-// File: app/Modules/IAM/Models/Notification.php (Updated)
+// File: app/Modules/IAM/Models/Notification.php
 
 namespace App\Modules\IAM\Models;
 
 use App\Core\Database\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Notification extends BaseModel
 {
-    use SoftDeletes;
-
     protected $table = 'notifications';
-
+    
+    // IMPORTANT: No soft deletes since the table doesn't have deleted_at column
+    // If you need soft deletes later, add the column to the migration first
+    
     protected $fillable = [
         'user_id',
         'type',
@@ -20,16 +20,15 @@ class Notification extends BaseModel
         'data',
         'url',
         'is_read',
-        'read_at',
+        'read_at'
     ];
-
+    
     protected $casts = [
         'data' => 'array',
         'is_read' => 'boolean',
-        'read_at' => 'datetime',
-        'created_at' => 'datetime',
+        'read_at' => 'datetime'
     ];
-
+    
     /**
      * Get the user that owns the notification
      */
@@ -37,20 +36,7 @@ class Notification extends BaseModel
     {
         return $this->belongsTo(User::class);
     }
-
-    /**
-     * Mark notification as read
-     */
-    public function markAsRead(): void
-    {
-        if (!$this->is_read) {
-            $this->update([
-                'is_read' => true,
-                'read_at' => now(),
-            ]);
-        }
-    }
-
+    
     /**
      * Get display data based on notification type
      */
@@ -78,16 +64,6 @@ class Notification extends BaseModel
             'expense_approved' => ['icon' => 'fas fa-receipt', 'color' => 'green'],
             'expense_rejected' => ['icon' => 'fas fa-receipt', 'color' => 'red'],
             
-            // Document related
-            'document_shared' => ['icon' => 'fas fa-share-alt', 'color' => 'indigo'],
-            'document_uploaded' => ['icon' => 'fas fa-file-upload', 'color' => 'blue'],
-            'policy_update' => ['icon' => 'fas fa-file-alt', 'color' => 'gray'],
-            
-            // Task related
-            'task_assigned' => ['icon' => 'fas fa-tasks', 'color' => 'orange'],
-            'task_completed' => ['icon' => 'fas fa-check-square', 'color' => 'green'],
-            'task_overdue' => ['icon' => 'fas fa-exclamation-triangle', 'color' => 'red'],
-            
             // System related
             'system_maintenance' => ['icon' => 'fas fa-tools', 'color' => 'yellow'],
             'security_alert' => ['icon' => 'fas fa-shield-alt', 'color' => 'red'],
@@ -99,39 +75,40 @@ class Notification extends BaseModel
 
         return $typeMap[$this->type] ?? $typeMap['default'];
     }
-
+    
     /**
-     * Get time display
+     * Get formatted time
      */
     public function getTimeAttribute(): string
     {
+        if (!$this->created_at) {
+            return 'just now';
+        }
+
         $now = now();
-        $created = $this->created_at;
-        
-        if ($created->isToday()) {
-            return $created->format('g:i A');
-        } elseif ($created->isYesterday()) {
-            return 'Yesterday at ' . $created->format('g:i A');
-        } elseif ($created->diffInDays($now) < 7) {
-            return $created->format('l \a\t g:i A'); // Day name
+        $diff = $now->diffInSeconds($this->created_at);
+
+        if ($diff < 60) {
+            return 'just now';
+        } elseif ($diff < 3600) {
+            return $this->created_at->diffInMinutes($now) . ' minute' . ($this->created_at->diffInMinutes($now) > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 86400) {
+            return $this->created_at->diffInHours($now) . ' hour' . ($this->created_at->diffInHours($now) > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 604800) {
+            return $this->created_at->diffInDays($now) . ' day' . ($this->created_at->diffInDays($now) > 1 ? 's' : '') . ' ago';
         } else {
-            return $created->format('M j \a\t g:i A');
+            return $this->created_at->format('M j, Y');
         }
     }
-
+    
     /**
-     * Scope for unread notifications
+     * Mark notification as read
      */
-    public function scopeUnread($query)
+    public function markAsRead(): void
     {
-        return $query->where('is_read', false);
-    }
-
-    /**
-     * Scope for read notifications
-     */
-    public function scopeRead($query)
-    {
-        return $query->where('is_read', true);
+        $this->update([
+            'is_read' => true,
+            'read_at' => now()
+        ]);
     }
 }

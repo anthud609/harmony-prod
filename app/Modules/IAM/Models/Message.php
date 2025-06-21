@@ -108,7 +108,30 @@ class Message extends BaseModel
             return $created->format('M j');
         }
     }
-
+/**
+     * Get the recipient of the message
+     */
+    public function recipient(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recipient_id');
+    }
+    
+    /**
+     * Get the parent message (for replies)
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'parent_id');
+    }
+    
+    /**
+     * Get replies to this message
+     */
+    public function replies()
+    {
+        return $this->hasMany(Message::class, 'parent_id');
+    }
+    
     /**
      * Mark as read
      */
