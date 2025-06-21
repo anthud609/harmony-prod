@@ -96,51 +96,53 @@ class User extends BaseModel
     {
         return $this->hasMany(ActivityLog::class);
     }
-    
-    /**
-     * Notifications
-     */
-    public function notifications(): HasMany
-    {
-        return $this->hasMany(Notification::class);
-    }
-    
-   
-    /**
-     * Get full name
+
+
+     /**
+     * Get user's full name
      */
     public function getFullNameAttribute(): string
     {
         return trim($this->first_name . ' ' . $this->last_name);
     }
     
-
-    // Add these relationships to your User model
-
-/**
- * Messages sent by this user
- */
-public function sentMessages(): HasMany
-{
-    return $this->hasMany(Message::class, 'sender_id');
-}
-
-/**
- * Messages received by this user
- */
-public function receivedMessages(): HasMany
-{
-    return $this->hasMany(Message::class, 'recipient_id');
-}
-
-/**
- * User's notifications
- */
-public function notifications(): HasMany
-{
-    return $this->hasMany(Notification::class);
-}
-
+    /**
+     * Get user's initials
+     */
+    public function getInitialsAttribute(): string
+    {
+        $firstName = $this->first_name ?? '';
+        $lastName = $this->last_name ?? '';
+        
+        return strtoupper(
+            substr($firstName, 0, 1) . 
+            substr($lastName, 0, 1)
+        ) ?: 'U';
+    }
+    
+    /**
+     * Messages sent by user
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+    
+    /**
+     * Messages received by user
+     */
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'recipient_id');
+    }
+    
+    /**
+     * User's notifications
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 /**
  * Get unread message count
  */
@@ -156,13 +158,7 @@ public function getUnreadNotificationCountAttribute(): int
 {
     return $this->notifications()->unread()->count();
 }
-    /**
-     * Get initials
-     */
-    public function getInitialsAttribute(): string
-    {
-        return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
-    }
+
     
     /**
      * Check if user has a specific role
